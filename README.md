@@ -1,5 +1,5 @@
 # CRUSHBLAS
-**BLAS-like linear algebra**, **modern encryption** and **lossless compression**
+**C++ BLAS-like linear algebra**, **modern encryption** and **lossless compression**
 ### FEATURES 
 (Please note this is a temporary list, 
 I'm still mapping out all the features and their implementations)
