@@ -39,13 +39,13 @@
 
     int main(){
        //First argument is the size of the matrix (Multiple of 8)
-       MatMulBenchmark(1024);
+       MatMulBenchmark(4096);
     }
 
     //==========Benchmark output==========:
-    2.14748 GFLOP
+    137.439 GFLOP
     DEBUG: AVX_MATMUL_STARTED
-    AVX MatMul: 0.0110571s, GFLOP/S = 194.217
+    AVX MatMul: 0.6610571s, GFLOP/S = 220.217
 
 
 - Transpose Benchmark:
