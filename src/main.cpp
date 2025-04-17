@@ -9,6 +9,7 @@ uint64_t nanos() {
 }
 
 void MatMulBenchmark(float A){
+  std::cout<<"Matrix size: " << A << "x"<<A<<std::endl;
   double totalOps = 2.0 * double(A) * double(A) * double(A);
   double gflopFactor = 1.0e-9;
   std::cout<< totalOps * 1e-9 << " GFLOP" << std::endl; 
@@ -28,6 +29,7 @@ void MatMulBenchmark(float A){
 }
 
 void TransposeBenchmark(float A){
+  std::cout<<"Matrix size: " << A << "x"<<A<<std::endl;
   double totalOps =  double(A) * double(A);
   double memfactor = 2.0 * A *  A * sizeof(float);
   double memfactorgb = memfactor / (1024.0 * 1024.0 * 1024.0); 
@@ -40,11 +42,12 @@ void TransposeBenchmark(float A){
   auto end = nanos(); 
   double optTime = (end - start) * 1e-9;
   double optmem =  memfactorgb / optTime;
-  std::cout << "Transpose: " << optTime
+  std::cout << "AVX Transpose: " << optTime
               << "s, GB/S = " << optmem << "\n";
 }
 
 int main(){
-  //MatMulBenchmark(1024*4);
-  TransposeBenchmark(1024*8); 
+  MatMulBenchmark(4096);
+  std::cout<<"==================================================="<<std::endl; 
+  TransposeBenchmark(4096); 
 }
