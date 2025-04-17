@@ -1,11 +1,8 @@
 #ifndef MATRIX_H 
 #define MATRIX_H 
 #include <vector> 
-#include <random> 
+#include <random>
 #include <iostream>
-#ifdef DEBUG  
-  #include <cassert>
-#endif
 #ifdef USE_AVX256
   #include <immintrin.h>
   extern "C" int omp_get_thread_num(); 
@@ -14,6 +11,16 @@
   extern "C" int omp_set_num_threads(int threads);
   extern "C" int omp_get_max_threads();
 #endif 
+#ifdef DEBUG  
+  #include <cassert>
+#define DEBUG_THREADS() do {                                \
+     _Pragma("omp parallel")                                \
+      printf("Thread %d out of %d (File: %s, Line: %d)\n",  \
+             omp_get_thread_num(),                          \
+             omp_get_num_threads(),                         \
+             __FILE__, __LINE__);                           \
+  }while(0)
+#endif
 
 #define MATRIX
 namespace mat{
@@ -46,11 +53,7 @@ public:
 
 
 class mat_ops{
-
 private: 
-  int block_i = 32; 
-  int block_j = 32; 
-  int block_k = 32;
   __attribute__((aligned(32))) mat::matrix mat;
 
 public: 
@@ -87,54 +90,85 @@ public:
   }
   
 #if USE_AVX256
-  mat_ops operator*(const mat_ops &rhs)const{
-    std::cout<<"DEBUG: AVX_MATMUL_STARTED"<<std::endl;
-    #define N static_cast<int>(this->mat.m_row)
-    mat::matrix A = this->mat; 
-    mat::matrix B = rhs.mat;
-    mat::matrix C(this->mat.m_row, this->mat.m_col);
-    mat::matrix C_ref(this->mat.m_row, this->mat.m_col);
-    
-    #pragma omp parallel for collapse(2) schedule(dynamic) 
-    for(int index = 0; index < N; index += block_i){
-      for(int jindex = 0; jindex < N; jindex += block_j){
-        int i_block_size = (index + block_i <= N) ? block_i : (N - index); 
-        int j_block_size = (jindex + block_j <= N) ? block_j : (N - jindex); 
+mat_ops operator*(const mat_ops &rhs) const {
+  constexpr int BLOCK_I = 256; //1024 bytes at fp32
+  constexpr int BLOCK_J = 256; //1024 bytes at fp32 
+  constexpr int BLOCK_K = 16;  //64 bytes at fp32
 
-        float c_block[block_i][block_j] __attribute__((aligned(32))); 
-        for(int itile = 0; itile < i_block_size; ++itile){
-          for(int jtile = 0; jtile < j_block_size; ++jtile){
-            c_block[itile][jtile] = 0.0f; 
-          }
-        }
-        for(int kindex = 0; kindex < N; kindex += block_k){
-          int k_block_size = (kindex + block_k <= N) ? block_k : (N - kindex);
-          for(int itile = 0; itile < i_block_size; ++itile){
-            int row_a = index + itile; 
-            for(int jtile = 0; jtile < j_block_size; jtile+=8){
-              __m256 sum_vector = _mm256_load_ps(&c_block[itile][jtile]); 
-              for(int ktile = 0; ktile < k_block_size; ++ktile){
-                int k_index = kindex + ktile; 
-                __m256 a_val = _mm256_broadcast_ss(&A[row_a][k_index]); 
-                __m256 b_val = _mm256_load_ps(&B[k_index][jindex + jtile]); 
+  mat::matrix A = this->mat;
+  mat::matrix B = rhs.mat;
+  mat::matrix C(A.m_row, B.m_col);
 
-                sum_vector= _mm256_fmadd_ps(a_val, b_val, sum_vector);
-              }
-              _mm256_store_ps(&c_block[itile][jtile], sum_vector); 
+  omp_set_num_threads(omp_get_max_threads());
+  #pragma omp parallel for collapse(2) schedule(dynamic,1)
+  for(size_t i_block = 0; i_block < A.m_row; i_block += BLOCK_I) {
+    for(size_t j_block = 0; j_block < B.m_col; j_block += BLOCK_J) {
+      float c_buffer[BLOCK_I][BLOCK_J] __attribute__((aligned(32))) = {{0}};
+      
+      const size_t i_end = std::min(i_block + BLOCK_I, A.m_row);
+      const size_t j_end = std::min(j_block + BLOCK_J, B.m_col);
+      
+      for(size_t k_block = 0; k_block < A.m_col; k_block += BLOCK_K) {
+        const size_t k_end = std::min(k_block + BLOCK_K, A.m_col);
+          
+        for(size_t i = i_block; i < i_end; ++i) {
+          for (size_t k = k_block; k < k_end; ++k) {
+            const float a_val = A[i][k];
+            __m256 a_vec = _mm256_broadcast_ss(&a_val);
+            //8x unrolled loop
+            for(size_t j = j_block; j < j_end; j += 64) {
+              __m256 b_vec0 = _mm256_load_ps(&B[k][j]);
+              __m256 b_vec1 = _mm256_load_ps(&B[k][j+8]);
+              __m256 b_vec2 = _mm256_load_ps(&B[k][j+16]);
+              __m256 b_vec3 = _mm256_load_ps(&B[k][j+24]); 
+              __m256 b_vec4 = _mm256_load_ps(&B[k][j+32]);
+              __m256 b_vec5 = _mm256_load_ps(&B[k][j+40]);
+              __m256 b_vec6 = _mm256_load_ps(&B[k][j+48]);
+              __m256 b_vec7 = _mm256_load_ps(&B[k][j+56]); 
+
+              __m256 c_vec0 = _mm256_load_ps(&c_buffer[i-i_block][j-j_block]);
+              __m256 c_vec1 = _mm256_load_ps(&c_buffer[i-i_block][j-j_block+8]);
+              __m256 c_vec2 = _mm256_load_ps(&c_buffer[i-i_block][j-j_block+16]);
+              __m256 c_vec3 = _mm256_load_ps(&c_buffer[i-i_block][j-j_block+24]);
+              __m256 c_vec4 = _mm256_load_ps(&c_buffer[i-i_block][j-j_block+32]);
+              __m256 c_vec5 = _mm256_load_ps(&c_buffer[i-i_block][j-j_block+40]);
+              __m256 c_vec6 = _mm256_load_ps(&c_buffer[i-i_block][j-j_block+48]);
+              __m256 c_vec7 = _mm256_load_ps(&c_buffer[i-i_block][j-j_block+56]);
+             
+              c_vec0 = _mm256_fmadd_ps(a_vec, b_vec0, c_vec0);
+              c_vec1 = _mm256_fmadd_ps(a_vec, b_vec1, c_vec1);
+              c_vec2 = _mm256_fmadd_ps(a_vec, b_vec2, c_vec2); 
+              c_vec3 = _mm256_fmadd_ps(a_vec, b_vec3, c_vec3);
+              c_vec4 = _mm256_fmadd_ps(a_vec, b_vec4, c_vec4);
+              c_vec5 = _mm256_fmadd_ps(a_vec, b_vec5, c_vec5);
+              c_vec6 = _mm256_fmadd_ps(a_vec, b_vec6, c_vec6);
+              c_vec7 = _mm256_fmadd_ps(a_vec, b_vec7, c_vec7);
+      
+              _mm256_store_ps(&c_buffer[i-i_block][j-j_block],     c_vec0);
+              _mm256_store_ps(&c_buffer[i-i_block][j-j_block+8],   c_vec1);
+              _mm256_store_ps(&c_buffer[i-i_block][j-j_block+16],  c_vec2);
+              _mm256_store_ps(&c_buffer[i-i_block][j-j_block+24],  c_vec3);  
+              _mm256_store_ps(&c_buffer[i-i_block][j-j_block+32],  c_vec4);            
+              _mm256_store_ps(&c_buffer[i-i_block][j-j_block+40],  c_vec5);
+              _mm256_store_ps(&c_buffer[i-i_block][j-j_block+48],  c_vec6);
+              _mm256_store_ps(&c_buffer[i-i_block][j-j_block+56],  c_vec7);
             }
           }
         }
-        for(int itile = 0; itile < i_block_size; ++itile){
-          int row_c = index + itile; 
-          for(int jtile = 0; jtile < j_block_size; ++jtile){
-            C[row_c][jindex + jtile] = c_block[itile][jtile]; 
-          }
+      }
+    //Flush buffer to C
+    for(size_t i = i_block; i < i_end; ++i) {
+      for(size_t j = j_block; j < j_end; ++j) {
+        C[i][j] = c_buffer[i - i_block][j - j_block];
         }
-      } 
+      }
     }
-    mat_ops ops(C);
-    return ops;
   }
+#if DEBUG 
+  DEBUG_THREADS();
+#endif
+  return mat_ops(C);
+}
 #else 
   mat_ops operator*(const mat_ops &rhs) const{
     mat_ops temp_mat = rhs;
@@ -158,7 +192,7 @@ public:
     for(size_t i = 0; i < this->mat.m_row; i += 8){
       for(size_t j = 0; j < this->mat.m_col; j += 8){
         for(size_t iblock = 0; iblock < 8; ++iblock){
-          _mm256_store_ps(block[iblock], _mm256_load_ps(&(*this).mat[i+iblock][j]));
+          _mm256_store_ps(block[iblock], _mm256_load_ps(&this->mat[i+iblock][j]));
         }
         for(size_t iblock = 0; iblock < 8; ++iblock){
           for(size_t jblock = iblock + 1; jblock < 8; ++jblock){
@@ -191,7 +225,6 @@ public:
     return mat_ops(temp_mat);
   }
 #endif
-
 };//end mat_ops 
 
 };//End namespace 
