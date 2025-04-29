@@ -116,6 +116,7 @@ mat_ops operator*(const mat_ops &rhs) const {
             const float a_val = A[i][k];
             __m256 a_vec = _mm256_broadcast_ss(&a_val);
             //8x unrolled loop
+            //64x64 sized matrices MIN -- No reason to have it any smaller 
             for(size_t j = j_block; j < j_end; j += 64) {
               __m256 b_vec0 = _mm256_load_ps(&B[k][j]);
               __m256 b_vec1 = _mm256_load_ps(&B[k][j+8]);
@@ -225,6 +226,7 @@ mat_ops operator*(const mat_ops &rhs) const {
     return mat_ops(temp_mat);
   }
 #endif
+  
 };//end mat_ops 
 
 };//End namespace 

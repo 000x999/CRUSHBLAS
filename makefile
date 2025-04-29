@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -std=c++20 -Wall -g 
+CXXFLAGS := -std=c++20 -Wall -g
 LDFLAGS :=
 SRC_DIR := src
 BUILD_DIR := build
@@ -8,7 +8,7 @@ BIN := CRUSHBLAS
 USE_AVX256 ?= 1
 USE_VULKAN ?= 0 
 USE_OPENGL ?= 0 
-DEBUG ?= 1
+DEBUG ?= 0
 
 
 ifeq ($(USE_AVX256),1)
@@ -19,8 +19,7 @@ else
 endif
 
 ifeq ($(DEBUG),1)
-	CXXFLAGS += -Wpedantic -Wextra
-	LDFLAGS +=
+	CXXFLAGS += -DDEBUG -Wpedantic -Wextra
 else 
 	CXXFLAGS += -DDEBUG=0
 endif

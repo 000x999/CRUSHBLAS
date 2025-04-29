@@ -25,7 +25,7 @@ void MatMulBenchmark(float A){
   double optTime = (end - start) * 1e-9;
   double optGflops = (totalOps * gflopFactor) / optTime;
   std::cout << "AVX MatMul: " << optTime
-              << "s, GFLOP/S = " << optGflops << "\n";
+            << "s, GFLOP/S = " << optGflops << "\n";
 }
 
 void TransposeBenchmark(float A){
@@ -46,8 +46,8 @@ void TransposeBenchmark(float A){
               << "s, GB/S = " << optmem << "\n";
 }
 
-int main(){
-  MatMulBenchmark(4096);
-  std::cout<<"==================================================="<<std::endl; 
-  TransposeBenchmark(4096); 
+int main(){     
+  MatMulBenchmark(128);
+  //std::cout<<"==================================================="<<std::endl; 
+  //TransposeBenchmark(4096);
 }
