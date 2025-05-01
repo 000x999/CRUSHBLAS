@@ -226,7 +226,21 @@ mat_ops operator*(const mat_ops &rhs) const {
     return mat_ops(temp_mat);
   }
 #endif
-  
+  mat_ops return_diagonal(){
+    mat::matrix temp_mat(this->mat.m_row, this->mat.m_col);
+    #if DEBUG
+      assert(this->mat.m_col == this->mat.m_row && "Matrix is not square");
+      assert((this->mat.m_col * this->mat.m_row % 128 != 0) && "Matrix is not a multiple of 128"); 
+    #endif
+    for(size_t i = 0; i < this->mat.m_row; ++i){
+      #if DEBUG
+        std::cout<< "row_index: "<< i << " col_index: " << j << std::endl; 
+      #endif
+      temp_mat[i][i] = this->mat[i][i]; 
+    }
+    return mat_ops(temp_mat); 
+  }
+ 
 };//end mat_ops 
 
 };//End namespace 
