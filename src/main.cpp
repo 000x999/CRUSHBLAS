@@ -18,10 +18,18 @@ void MatMulBenchmark(float A){
   mat::mat_ops op1(mat1); 
   mat::mat_ops op2(mat2);
   op1.fill_mat();
-  op2.fill_mat(); 
+  op2.fill_mat();
+  std::cout<<"\n=================================="<<std::endl;
+  op1.display(); 
+  std::cout<<"\n=================================="<<std::endl;
+  op2.display();
+  std::cout<<"\n=================================="<<std::endl;
   auto start = nanos(); 
-  mat::mat_ops op3 = op1 * op2; 
-  auto end = nanos(); 
+  mat::mat_ops op3 = mat::mat_ops::mat_mul(op1,op2);
+  op3.display(); 
+  std::cout<<"\n=================================="<<std::endl;
+  auto end = nanos();
+  //op3.display();
   double optTime = (end - start) * 1e-9;
   double optGflops = (totalOps * gflopFactor) / optTime;
   std::cout << "AVX MatMul: " << optTime
@@ -38,7 +46,7 @@ void TransposeBenchmark(float A){
   mat::mat_ops op1(mat1); 
   op1.fill_mat();
   auto start = nanos();
-  op1 = op1.transpose();
+  //op1 = op1.transpose();
   auto end = nanos(); 
   double optTime = (end - start) * 1e-9;
   double optmem =  memfactorgb / optTime;
@@ -67,8 +75,18 @@ void DiagonalBenchmark(float A){
 }
 
 int main(){     
-  // MatMulBenchmark(128);
+  //MatMulBenchmark(4);
+  
+  mat::matrix A(5,5); 
+  mat::mat_ops op1(A);
+  op1.fill_mat(); 
+  std::cout<<"=================================="<<std::endl; 
+  op1.display(); 
+  std::cout<<"=================================="<<std::endl;
+  std::cout<< "index[0][0]: "<<op1.return_value(0,0)<< " | "<< " index[5][5]: " << op1.return_value(5,5)<< " | " << " index[3][2]: " 
+           << op1.return_value(3,2)<< " | " << " index[1][4]: " << op1.return_value(1,4)<< " | " << std::endl; 
+  
   //std::cout<<"==================================================="<<std::endl; 
   //TransposeBenchmark(4096);
-  //DiagonalBenchmark(10);
+  //DiagonalBenchmark(2048);
 }
