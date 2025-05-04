@@ -32,25 +32,37 @@ public:
   class map_rows{
   public: 
     map_rows(float* m_start_row, size_t m_cols): m_start_row(m_start_row), m_cols(m_cols){}
-#if DEBUG
+    map_rows(const float *m_start_row, size_t m_cols): m_start_row(const_cast<float*>(m_start_row)), m_cols(m_cols){}
+    
     float &operator[](size_t col){
-      assert(col < m_cols && "COL index OB");  
-      return m_start_row[m_cols];
+    #if DEBUG 
+      assert(col < m_cols && "COL index OB");
+    #endif
+      size_t new_bound = col < m_cols ? col : m_cols - 1; 
+      return m_start_row[new_bound];
     }
-#else 
-    float &operator[](size_t col){
-      return m_start_row[col];
+    const float &operator[](size_t col) const{
+    #if DEBUG  
+      assert(col < m_cols && "COL index OB");
+    #endif
+      size_t new_bound = col < m_cols ? col : m_cols - 1;      
+      return m_start_row[new_bound];
     }
-#endif
   private: 
     float *m_start_row; 
     size_t m_cols; 
   };//end map_rows
 public:
   matrix(size_t m_row, size_t m_col) : m_row(m_row), m_col(m_col), m_data(m_row * m_col){}
-  map_rows operator[](size_t row) {return map_rows(&m_data[row*m_col], m_col);}
+  map_rows operator[](size_t row) {
+    size_t new_bound = row < m_row ? row : m_row - 1;    
+    return map_rows(&m_data[new_bound * m_col], m_col);
+  }
+  const map_rows operator[](size_t row) const{
+    size_t new_bound = row < m_row ? row : m_row - 1; 
+    return map_rows(&m_data[new_bound * m_col], m_col);
+  }
 };//end mat  
-
 
 class mat_ops{
 private: 
@@ -84,19 +96,27 @@ public:
   void zero_mat(){
     for(size_t i = 0; i < mat.m_row; ++i){
       for(size_t j = 0; j < mat.m_col; ++j){
-        mat[i][j] = 0; 
+        mat[i][j] = 1; 
       }
     }
   }
+
+  float return_value(size_t i, size_t j){
+    return this->mat[i][j]; 
+  }
   
 #if USE_AVX256
-mat_ops operator*(const mat_ops &rhs) const {
+ static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
+  #if DEBUG
+    assert(left_mat.mat.m_col == left_mat.mat.m_row && right_mat.mat.m_col == right_mat.mat.m_row && "Matrix is not square");
+    assert((left_mat.mat.m_col * left_mat.mat.m_row % 128 != 0) && (right_mat.mat.m_col * right_mat.mat.m_row % 128 != 0 ) && "Matrix is not a multiple of 128"); 
+  #endif
   constexpr int BLOCK_I = 256; //1024 bytes at fp32
   constexpr int BLOCK_J = 256; //1024 bytes at fp32 
   constexpr int BLOCK_K = 16;  //64 bytes at fp32
 
-  mat::matrix A = this->mat;
-  mat::matrix B = rhs.mat;
+  mat::matrix A = left_mat.mat;
+  mat::matrix B = right_mat.mat;
   mat::matrix C(A.m_row, B.m_col);
 
   omp_set_num_threads(omp_get_max_threads());
@@ -116,7 +136,9 @@ mat_ops operator*(const mat_ops &rhs) const {
             const float a_val = A[i][k];
             __m256 a_vec = _mm256_broadcast_ss(&a_val);
             //8x unrolled loop
-            //64x64 sized matrices MIN -- No reason to have it any smaller 
+            //128x128 sized matrices MIN -- No reason to have it any smaller
+            /*If smaller matrices than 128x128 are needed, no reason to use with avx, 
+              it's fast enough without for smaller sized ones*/
             for(size_t j = j_block; j < j_end; j += 64) {
               __m256 b_vec0 = _mm256_load_ps(&B[k][j]);
               __m256 b_vec1 = _mm256_load_ps(&B[k][j+8]);
@@ -171,18 +193,22 @@ mat_ops operator*(const mat_ops &rhs) const {
   return mat_ops(C);
 }
 #else 
-  mat_ops operator*(const mat_ops &rhs) const{
-    mat_ops temp_mat = rhs;
-    mat::matrix A = rhs.mat; 
+ static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
+    size_t mat_size = left_mat.mat.m_row; 
+    mat::matrix temp_mat(mat_size, mat_size);
+  #if DEBUG
     std::cout<<"DEBUG: std_matmul_started"<<std::endl;
-    for(int i = 0; i < rhs.mat.m_row; ++i){
-      for(int j = 0; j < rhs.mat.m_col; ++j){
-        for(int k = 0; k < rhs.mat.m_col; ++k){
-          temp_mat.mat[i][j] = A[i][k] * A[k][j]; 
+  #endif
+    for(int i = 0; i < mat_size; ++i){
+      for(int j = 0; j < mat_size; ++j){
+        float sum = 0.0f;
+        for(int k = 0; k < mat_size; ++k){
+          sum += left_mat.mat[i][k] * right_mat.mat[k][j]; 
         }
+        temp_mat[i][j] = sum;
       }
     }
-    return temp_mat;
+    return mat_ops(temp_mat);
   } 
 #endif
 
@@ -208,11 +234,12 @@ mat_ops operator*(const mat_ops &rhs) const {
     return mat_ops(res); 
   }
 #else 
-  mat_ops transpose(){
-    mat::matrix temp_mat(this->mat.m_row, this->mat.m_col); 
-    for(size_t i = 0; i < this->mat.m_row; i++){
-      for(size_t j = 0; j < this->mat.m_col; j++){
-        temp_mat[i][j] = this->mat[i][j]; 
+  /*
+  static mat_ops transpose(const mat_ops &mat_in){
+    mat::matrix temp_mat(mat_in.mat.m_row, mat_in.mat.m_col); 
+    for(size_t i = 0; i < mat_in.mat.m_row; i++){
+      for(size_t j = 0; j < mat_in.mat.m_col; j++){
+        temp_mat[i][j] = mat_in.mat[i][j]; 
       }
     }
     size_t temp = this->mat.m_row; 
@@ -225,6 +252,7 @@ mat_ops operator*(const mat_ops &rhs) const {
     }
     return mat_ops(temp_mat);
   }
+        */
 #endif
   mat_ops return_diagonal(){
     mat::matrix temp_mat(this->mat.m_row, this->mat.m_col);
