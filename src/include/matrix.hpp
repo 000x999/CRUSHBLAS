@@ -38,15 +38,23 @@ public:
     #if DEBUG 
       assert(col < m_cols && "COL index OB");
     #endif
-      size_t new_bound = col < m_cols ? col : m_cols - 1; 
-      return m_start_row[new_bound];
+      /*Could add this back in for more 'correct' manual indexing but it slows down the matmul by 
+      ~70GLFOP/s...*/ 
+      
+      //size_t new_bound = col < m_cols ? col : m_cols - 1; 
+      //return m_start_row[new_bound];
+      return m_start_row[col]; 
     }
     const float &operator[](size_t col) const{
     #if DEBUG  
       assert(col < m_cols && "COL index OB");
     #endif
-      size_t new_bound = col < m_cols ? col : m_cols - 1;      
-      return m_start_row[new_bound];
+      /*Could add this back in for more 'correct' manual indexing but it slows down the matmul by 
+      ~70GLFOP/s...*/       
+
+      //size_t new_bound = col < m_cols ? col : m_cols - 1;      
+      //return m_start_row[new_bound];
+      return m_start_row[col];    
     }
   private: 
     float *m_start_row; 
@@ -55,12 +63,20 @@ public:
 public:
   matrix(size_t m_row, size_t m_col) : m_row(m_row), m_col(m_col), m_data(m_row * m_col){}
   map_rows operator[](size_t row) {
-    size_t new_bound = row < m_row ? row : m_row - 1;    
-    return map_rows(&m_data[new_bound * m_col], m_col);
+    /*Could add this back in for more 'correct' manual indexing but it slows down the matmul by 
+      ~70GLFOP/s...*/ 
+
+    //size_t new_bound = row < m_row ? row : m_row - 1;    
+    //return map_rows(&m_data[new_bound * m_col], m_col);
+    return map_rows(&m_data[row * m_col], m_col); 
   }
   const map_rows operator[](size_t row) const{
-    size_t new_bound = row < m_row ? row : m_row - 1; 
-    return map_rows(&m_data[new_bound * m_col], m_col);
+    /*Could add this back in for more 'correct' manual indexing but it slows down the matmul by 
+      ~70GLFOP/s...*/ 
+
+    //size_t new_bound = row < m_row ? row : m_row - 1; 
+    //return map_rows(&m_data[new_bound * m_col], m_col);
+     return map_rows(&m_data[row * m_col], m_col); 
   }
 };//end mat  
 
