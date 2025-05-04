@@ -29,7 +29,7 @@
       op1.fill_mat();
       op2.fill_mat(); 
       auto start = nanos(); 
-      mat::mat_ops op3 = op1 * op2; 
+      mat::mat_ops op3 = mat::matops::mat_mul(op1,op2); 
       auto end = nanos(); 
       double optTime = (end - start) * 1e-9;
       double optGflops = (totalOps * gflopFactor) / optTime;
