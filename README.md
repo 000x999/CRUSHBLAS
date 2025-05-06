@@ -3,7 +3,7 @@
 
 ### CURRENT FEATURES 
 - Generalized matrix and matrix operations containers using a single contiguous array structure. 
-- Threaded Tiled Matrix Multiplications of matrices using AVX256 instructions, speed will depend on the machine, but you can expect 4096x4096 matrices in ~0.66s at 225 GFLOP/s FP32 (CPU Bound).
+- Threaded Tiled Matrix Multiplications of matrices using AVX256 instructions, speed will depend on the machine, but you can expect 4096x4096 matrices in ~0.51s at 265 GFLOP/s FP32 (CPU Bound).
 - Multi-Threaded and Tiled, Matrix Transpose of matrices using AVX256 instructions , speed will depend on the machine, but you can expect 16384x16384 matrices in ~0.889s at 2.25 GB/s FP32 (CPU Bound).
 
 ### CURRENTLY WORKING ON 
@@ -45,7 +45,7 @@
     //==========Benchmark output==========:
     137.439 GFLOP
     DEBUG: AVX_MATMUL_STARTED
-    AVX MatMul: 0.6610571s, GFLOP/S = 220.217
+    AVX MatMul: 0.517075s, GFLOP/S = 265.801
 
 
 - Transpose Benchmark:
