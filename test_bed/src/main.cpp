@@ -1,4 +1,4 @@
-#include "include/matrix.hpp"
+#include "../../core/include/matrix_core/matrix.hpp"
 #include <stdlib.h>
 #include <x86intrin.h>
 
@@ -83,7 +83,6 @@ int main(){
   mat::mat_ops op1(A); 
   mat::mat_ops op2(B); 
   op1.fill_mat(); 
-  op2 = mat::mat_ops::matrix_inverse(op1);
   op1.display(); 
   std::cout<<"====================================================="<<std::endl;
   op2.display(); 

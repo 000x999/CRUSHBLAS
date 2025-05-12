@@ -307,19 +307,7 @@ public:
     }
     return mat_ops(temp_mat); 
   }
-  static mat_ops gemm(size_t m, size_t n, size_t a, const mat_ops &A, size_t lda, const mat_ops &B, size_t ldb, const mat_ops &C, size_t ldc){
-    size_t mat_size_row = A.mat.m_row; 
-    size_t mat_size_col = A.mat.m_col;
-    size_t mat_col = B.mat.m_col;
-    for(size_t i = 0; i < mat_size_row; ++i){
-      for(size_t j = 0; j < mat_col; ++j){
-        float temp_sum = 0.0f; 
-        for(size_t k = 0; k < mat_size_col; ++k){
-          temp_sum = temp_sum + A.mat[i * lda + k] * B.mat[k * ldb * j]; 
-        }
-      }
-    }
-  }
+ 
 };//end mat_ops 
 
 };//End namespace 

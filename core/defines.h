@@ -11,14 +11,17 @@
 #endif 
 
 #ifdef CRUSH_EXPORT
-#ifdef _MSC_VER 
+// Exports
+#ifdef _MSC_VER
 #define CRUSH_API __declspec(dllexport)
-#else 
+#else
 #define CRUSH_API __attribute__((visibility("default")))
-#endif 
+#endif
+#else
+// Imports
 #ifdef _MSC_VER
 #define CRUSH_API __declspec(dllimport)
-#else 
+#else
 #define CRUSH_API
 #endif
 #endif
