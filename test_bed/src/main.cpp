@@ -75,24 +75,8 @@ void DiagonalBenchmark(float A){
 }
 
 int main(){     
-  //MatMulBenchmark(4096);
-  
-  mat::matrix A(5,5); 
-  mat::matrix B(5,5); 
-
-  mat::mat_ops op1(A); 
-  mat::mat_ops op2(B); 
-  op1.fill_mat(); 
-  op1.display(); 
-  std::cout<<"====================================================="<<std::endl;
-  op2.display(); 
-  std::cout<<"====================================================="<<std::endl;
-  std::cout<<"Checking for AB = I"<<std::endl; 
-  mat::mat_ops op3 = mat::mat_ops::mat_mul(op1, op2); 
-  op3.display();
-  
-
-
+  MatMulBenchmark(4096);
+ 
   /*
   mat::matrix A(5,5); 
   mat::mat_ops op1(A);
