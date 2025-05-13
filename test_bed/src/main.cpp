@@ -45,38 +45,20 @@ void TransposeBenchmark(float A){
   mat::matrix mat1(A, A);
   mat::mat_ops op1(mat1); 
   op1.fill_mat();
+  op1.display();
   auto start = nanos();
-  //op1 = op1.transpose();
+  op1 = mat::mat_ops::transpose_matrix(op1);
   auto end = nanos(); 
   double optTime = (end - start) * 1e-9;
   double optmem =  memfactorgb / optTime;
   std::cout << "AVX Transpose: " << optTime
               << "s, GB/S = " << optmem << "\n";
-}
-
-void DiagonalBenchmark(float A){
-  std::cout<<"Matrix size: " << A << "x"<<A<<std::endl;
-  double totalOps =  double(A); 
-  double memfactor = 2.0 * A *  A * sizeof(float);
-  double memfactorgb = memfactor / (1024.0 * 1024.0 * 1024.0); 
-  std::cout<< totalOps * 1e-6<< " KB" << std::endl; 
-  mat::matrix test(A,A);
-  mat::mat_ops op1(test);
-  op1.fill_mat();
-  op1.display(); 
-  auto start = nanos();
-  op1 = op1.return_diagonal();
-  auto end = nanos(); 
   op1.display();
-  double optTime = (end - start) * 1e-9;
-  double optmem =  memfactorgb / optTime;
-  std::cout << "\nReturn diagonal: " << optTime
-              << "s, GB/S = " << optmem << "\n";
 }
 
 int main(){     
-  MatMulBenchmark(4096);
- 
+  //MatMulBenchmark(4096);
+  TransposeBenchmark(5);
   /*
   mat::matrix A(5,5); 
   mat::mat_ops op1(A);
