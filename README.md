@@ -59,7 +59,7 @@
       mat::mat_ops op1(mat1); 
       op1.fill_mat();
       auto start = nanos();
-      op1 = op1.transpose();
+      op1 = mat::mat_ops::transpose_matrix(op1);
       auto end = nanos(); 
       double optTime = (end - start) * 1e-9;
       double optmem =  memfactorgb / optTime;
