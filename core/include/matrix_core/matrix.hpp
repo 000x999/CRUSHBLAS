@@ -1,27 +1,7 @@
 #ifndef MATRIX_H 
 #define MATRIX_H 
-#include <vector>
-#include <algorithm>
-#include <random>
-#include <iostream>
-#ifdef USE_AVX256
-  #include <immintrin.h>
-  extern "C" int omp_get_thread_num(); 
-  extern "C" int omp_get_num_threads();
-  extern "C" int omp_set_dynamic(int threads);
-  extern "C" int omp_set_num_threads(int threads);
-  extern "C" int omp_get_max_threads();
-#endif 
-#ifdef DEBUG  
-  #include <cassert>
-#define DEBUG_THREADS() do {                                \
-     _Pragma("omp parallel")                                \
-      printf("Thread %d out of %d (File: %s, Line: %d)\n",  \
-             omp_get_thread_num(),                          \
-             omp_get_num_threads(),                         \
-             __FILE__, __LINE__);                           \
-  }while(0)
-#endif
+#include "../logger_core/logger.h"
+#include "../../defines.h"
 
 #define MATRIX
 namespace mat{
@@ -36,9 +16,12 @@ public:
     map_rows(const float *m_start_row, size_t m_cols): m_start_row(const_cast<float*>(m_start_row)), m_cols(m_cols){}
     
     float &operator[](size_t col){
-    #if DEBUG 
-      assert(col < m_cols && "COL index OB");
-    #endif
+    #if DEBUG
+      if(!(col < m_cols)){
+        CRUSH_FATAL("COL INDEX OOB : ASSERTION FAILED"); 
+      }
+      assert(col < m_cols);
+    #endif   
       /*Could add this back in for more 'correct' manual indexing but it slows down the matmul by 
       ~70GLFOP/s...*/ 
       
@@ -47,9 +30,12 @@ public:
       return m_start_row[col]; 
     }
     const float &operator[](size_t col) const{
-    #if DEBUG  
-      assert(col < m_cols && "COL index OB");
-    #endif
+    #if DEBUG
+      if(!(col < m_cols)){
+        CRUSH_FATAL("COL INDEX OOB : ASSERTION FAILED"); 
+      }
+      assert(col < m_cols);
+    #endif   
       /*Could add this back in for more 'correct' manual indexing but it slows down the matmul by 
       ~70GLFOP/s...*/       
 
@@ -117,16 +103,18 @@ public:
       }
     }
   }
-
-  float return_value(size_t i, size_t j){
-    return this->mat[i][j]; 
-  }
   
 #if USE_AVX256
- static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
+  CRUSH_API static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
   #if DEBUG
-    assert(left_mat.mat.m_col == left_mat.mat.m_row && right_mat.mat.m_col == right_mat.mat.m_row && "Matrix is not square");
-    assert((left_mat.mat.m_col * left_mat.mat.m_row % 128 != 0) && (right_mat.mat.m_col * right_mat.mat.m_row % 128 != 0 ) && "Matrix is not a multiple of 128"); 
+    if(!(left_mat.mat.m_col == left_mat.mat.m_row) || !(right_mat.mat.m_col == right_mat.mat.m_row)){
+      CRUSH_FATAL("MATRICES ARE NOT SQUARE :  ASSERTION FAILED"); 
+    }
+    if((left_mat.mat.m_col * right_mat.mat.m_row % 128 != 0)){
+      CRUSH_FATAL("MATRICES ARE NOT MULTIPLES OF 128 :  ASSERTION FAILED");
+    }
+    assert(left_mat.mat.m_col == left_mat.mat.m_row && right_mat.mat.m_col == right_mat.mat.m_row);
+    assert((left_mat.mat.m_col * right_mat.mat.m_row % 128 == 0)); 
   #endif
   constexpr int BLOCK_I = 256; //1024 bytes at fp32
   constexpr int BLOCK_J = 256; //1024 bytes at fp32 
@@ -210,13 +198,13 @@ public:
   return mat_ops(C);
 }
 #else 
- static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
+  CRUSH_API static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
     size_t mat_size_row = left_mat.mat.m_row;
     size_t mat_size_col = left_mat.mat.m_col; 
     size_t mat_col = right_mat.mat.m_col; 
     mat::matrix temp_mat(mat_size_row, mat_col);
   #if DEBUG
-    std::cout<<"DEBUG: std_matmul_started"<<std::endl;
+    CRUSH_DEBUG("STD MAT_MUL STARTED");
   #endif
     for(int i = 0; i < mat_size_row; ++i){
       for(int j = 0; j < mat_col; ++j){
@@ -232,13 +220,19 @@ public:
 #endif
 
 #if USE_AVX256
-  mat_ops transpose(){
-    mat::matrix res(this->mat.m_col, this->mat.m_row); 
+  CRUSH_API static mat_ops transpose(const mat_ops &mat_in){
+  #if DEBUG
+    if(mat_in.mat.m_row != mat_in.mat.m_col){
+      CRUSH_FATAL("MATRIX IS NOT SQUARE : ASSERTION FAILED"); 
+    }
+    assert(mat_in.mat.m_row == mat_in.mat.m_col);
+  #endif
+    mat::matrix res(mat_in.mat.m_col, mat_in.mat.m_row); 
     float block[8][8] __attribute__((aligned(32))); 
-    for(size_t i = 0; i < this->mat.m_row; i += 8){
-      for(size_t j = 0; j < this->mat.m_col; j += 8){
+    for(size_t i = 0; i < mat_in.mat.m_row; i += 8){
+      for(size_t j = 0; j < mat_in.mat.m_col; j += 8){
         for(size_t iblock = 0; iblock < 8; ++iblock){
-          _mm256_store_ps(block[iblock], _mm256_load_ps(&this->mat[i+iblock][j]));
+          _mm256_store_ps(block[iblock], _mm256_load_ps(&mat_in.mat[i+iblock][j]));
         }
         for(size_t iblock = 0; iblock < 8; ++iblock){
           for(size_t jblock = iblock + 1; jblock < 8; ++jblock){
@@ -253,61 +247,27 @@ public:
     return mat_ops(res); 
   }
 #else 
-  /*
-  static mat_ops transpose(const mat_ops &mat_in){
-    mat::matrix temp_mat(mat_in.mat.m_row, mat_in.mat.m_col); 
+  CRUSH_API static mat_ops transpose_matrix(const mat_ops &mat_in){
+   #if DEBUG
+    if(mat_in.mat.m_row != mat_in.mat.m_col){
+      CRUSH_FATAL("MATRIX IS NOT SQUARE : ASSERTION FAILED"); 
+    }
+    assert(mat_in.mat.m_row == mat_in.mat.m_col);
+  #endif
+   
+    mat::matrix temp_mat = mat_in.mat; 
+    size_t temp = mat_in.mat.m_row; 
+    temp_mat.m_row = mat_in.mat.m_col; 
+    temp_mat.m_col = temp;
     for(size_t i = 0; i < mat_in.mat.m_row; i++){
       for(size_t j = 0; j < mat_in.mat.m_col; j++){
-        temp_mat[i][j] = mat_in.mat[i][j]; 
-      }
-    }
-    size_t temp = this->mat.m_row; 
-    this->mat.m_row = this->mat.m_col; 
-    this->mat.m_col = temp;
-    for(size_t i = 0; i < this->mat.m_row; i++){
-      for(size_t j = 0; j < this->mat.m_col; j++){
-        this->mat[i][j] = temp_mat[j][i]; 
+        temp_mat[i][j] = mat_in.mat[j][i]; 
       }
     }
     return mat_ops(temp_mat);
   }
-        */
 #endif
 
-  static mat_ops opp_sign(mat_ops &mat_in){
-    for(size_t i = 0; i < mat_in.mat.m_row; ++i){
-      for(size_t j = 0; j < mat_in.mat.m_col; ++j){
-        mat_in.mat[i][j] = -mat_in.mat[i][j]; 
-      }
-    }
-    return mat_in; 
-  }
-
-  static mat_ops subtract_matrix(const mat_ops &mat_left, const mat_ops &mat_right){
-    mat::matrix temp_mat(mat_left.mat.m_row, mat_left.mat.m_col); 
-    for(size_t i = 0; i < mat_left.mat.m_row; ++i){
-      for(size_t j = 0; j < mat_left.mat.m_col; ++j){
-        temp_mat[i][j] = mat_left.mat[i][j] - mat_right.mat[i][j];
-      }
-    }
-    return mat_ops(temp_mat);
-  } 
-
-  mat_ops return_diagonal(){
-    mat::matrix temp_mat(this->mat.m_row, this->mat.m_col);
-    #if DEBUG
-      assert(this->mat.m_col == this->mat.m_row && "Matrix is not square");
-      assert((this->mat.m_col * this->mat.m_row % 128 != 0) && "Matrix is not a multiple of 128"); 
-    #endif
-    for(size_t i = 0; i < this->mat.m_row; ++i){
-      #if DEBUG
-        std::cout<< "row_index: "<< i << " col_index: " << j << std::endl; 
-      #endif
-      temp_mat[i][i] = this->mat[i][i]; 
-    }
-    return mat_ops(temp_mat); 
-  }
- 
 };//end mat_ops 
 
 };//End namespace 
