@@ -69,9 +69,9 @@ public:
 
 class mat_ops{
 private: 
-  __attribute__((aligned(32))) mat::matrix mat;
 
 public: 
+  __attribute__((aligned(32))) mat::matrix mat;
   mat_ops(mat::matrix &mat): mat(mat){}
   
   void display(){
@@ -99,21 +99,32 @@ public:
   void zero_mat(){
     for(size_t i = 0; i < mat.m_row; ++i){
       for(size_t j = 0; j < mat.m_col; ++j){
-        mat[i][j] = 1; 
+        mat[i][j] = 0; 
       }
     }
   }
-  
+
+  const size_t return_row_count()const{
+    return this->mat.m_row; 
+  }
+
+  const size_t return_col_count()const{
+    return this->mat.m_col; 
+  }
+
+//start of matrix primitives 
+//these are different from level1/2/3 BLAS operations
+//primitives are still useful in terms of convenience and OOC operations 
 #if USE_AVX256
-  CRUSH_API static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
+  static CRUSH_API mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
   #if DEBUG
     if(!(left_mat.mat.m_col == left_mat.mat.m_row) || !(right_mat.mat.m_col == right_mat.mat.m_row)){
-      CRUSH_FATAL("MATRICES ARE NOT SQUARE :  ASSERTION FAILED"); 
+      CRUSH_FATAL("MATRICES ARE NOT SQUARE :  ASSERTION FAILED\n"); 
     }
     if((left_mat.mat.m_col * right_mat.mat.m_row % 128 != 0)){
-      CRUSH_FATAL("MATRICES ARE NOT MULTIPLES OF 128 :  ASSERTION FAILED");
+      CRUSH_FATAL("MATRICES ARE NOT MULTIPLES OF 128 :  ASSERTION FAILED\n");
     }
-    assert(left_mat.mat.m_col == left_mat.mat.m_row && right_mat.mat.m_col == right_mat.mat.m_row);
+    assert(left_mat.mat.m_col == left_mat.mat.m_row && right_mat.mat.m_col == right_mat.mat.m_row); 
     assert((left_mat.mat.m_col * right_mat.mat.m_row % 128 == 0)); 
   #endif
   constexpr int BLOCK_I = 256; //1024 bytes at fp32
@@ -141,7 +152,7 @@ public:
             const float a_val = A[i][k];
             __m256 a_vec = _mm256_broadcast_ss(&a_val);
             //8x unrolled loop
-            //128x128 sized matrices MIN -- No reason to have it any smaller
+            //128x128 sized matrices MIN No reason to have it any smaller
             /*If smaller matrices than 128x128 are needed, no reason to use with avx, 
               it's fast enough without for smaller sized ones*/
             for(size_t j = j_block; j < j_end; j += 64) {
@@ -198,7 +209,7 @@ public:
   return mat_ops(C);
 }
 #else 
-  CRUSH_API static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
+  static CRUSH_API mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
     size_t mat_size_row = left_mat.mat.m_row;
     size_t mat_size_col = left_mat.mat.m_col; 
     size_t mat_col = right_mat.mat.m_col; 
@@ -220,7 +231,7 @@ public:
 #endif
 
 #if USE_AVX256
-  CRUSH_API static mat_ops transpose(const mat_ops &mat_in){
+  static CRUSH_API mat_ops transpose_matrix(const mat_ops &mat_in){
   #if DEBUG
     if(mat_in.mat.m_row != mat_in.mat.m_col){
       CRUSH_FATAL("MATRIX IS NOT SQUARE : ASSERTION FAILED"); 
@@ -247,14 +258,13 @@ public:
     return mat_ops(res); 
   }
 #else 
-  CRUSH_API static mat_ops transpose_matrix(const mat_ops &mat_in){
+  static CRUSH_API mat_ops transpose_matrix(const mat_ops &mat_in){
    #if DEBUG
     if(mat_in.mat.m_row != mat_in.mat.m_col){
       CRUSH_FATAL("MATRIX IS NOT SQUARE : ASSERTION FAILED"); 
     }
     assert(mat_in.mat.m_row == mat_in.mat.m_col);
   #endif
-   
     mat::matrix temp_mat = mat_in.mat; 
     size_t temp = mat_in.mat.m_row; 
     temp_mat.m_row = mat_in.mat.m_col; 
@@ -267,6 +277,24 @@ public:
     return mat_ops(temp_mat);
   }
 #endif
+  
+  static CRUSH_API mat_ops block_matrix(const mat_ops &mat_in, size_t i, size_t j, size_t p, size_t q){
+  #if DEBUG
+    if(i + p > mat_in.mat.m_row || j + q > mat_in.mat.m_col){
+      CRUSH_FATAL("BLOCK INDICES OUT OF RANGE : ASSERTION FALED"); 
+    }
+    assert(i + p < mat_in.mat.m_row || j + q < mat_in.mat.m_col); 
+  #endif
+    mat::matrix temp_mat(p,q);
+    for(size_t a = 0; a < p; ++a){
+      for(size_t b= 0; b < q; ++b){
+        temp_mat[a][b] = mat_in.mat[a + i][b + j]; 
+      }
+    }
+    return mat_ops(temp_mat);
+  }
+
+  
 
 };//end mat_ops 
 
