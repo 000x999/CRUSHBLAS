@@ -2,9 +2,13 @@
 **C++ BLAS**, **modern encryption** and **lossless compression**
 
 ### CURRENT FEATURES 
-- Generalized matrix and matrix operations containers using a single contiguous array structure. 
-- Threaded Tiled Matrix Multiplications of matrices using AVX256 instructions, speed will depend on the machine, but you can expect 4096x4096 matrices in ~0.51s at 265 GFLOP/s FP32 (CPU Bound).
-- Multi-Threaded and Tiled, Matrix Transpose of matrices using AVX256 instructions , speed will depend on the machine, but you can expect 16384x16384 matrices in ~0.889s at 2.25 GB/s FP32 (CPU Bound).
+- Generalized Matrix API and Matrix operations container using a single contiguous array structure. 
+- Threaded Tiled Matrix Multiplications of matrices using AVX256 instructions, speed will depend on the machine, but one can expect 4096x4096 matrices in ~0.51s at 265 GFLOP/s FP32 (CPU Bound).
+- Multi-Threaded and Tiled, Matrix Transpose of matrices using AVX256 instructions , speed will depend on the machine, but one can expect 16384x16384 matrices in ~0.889s at 2.25 GB/s FP32 (CPU Bound).
+- Level3 GEMM kernel using the custom Matrix API as well as AVX256 instruction acceleration.
+- Generalized Tensor API and Tensor operations container through the custom Matrix API.
+- Contracted TensorMul using the level3 GEMM kernel with AVX256 acceleration, speed will depend on the machine and the Tensor structure, but one can expect a Contracted TensorMul with,  ```Tensor(1,15,4096)```, that is, 1 batch, 15 slices of 4096x4096 matrices to be computed in ~8.1893s at 251.741 GFLOP/s FP32 (CPU Bound).
+- Batched TensorMul using the level3 GEMM kernel with AVX256 acceleration, speed will depend on the machine and the Tensor structure, but one can expect a Batched TensorMul with,  ```Tensor(1,15,4096)```, that is, 1 batch, 15 slices of 4096x4096 matrices to be computed in ~8.1893s at 237.869 GFLOP/s FP32 (CPU Bound).
 
 ### CURRENTLY WORKING ON 
 - VULKAN/OPENGL Compute shader backend as the GPU operation pipeline **==> HIGH PRIORITY**. 
