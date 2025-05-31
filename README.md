@@ -53,7 +53,7 @@
         contracted_tensor_mul_benchmark(1,15,4096)
     }
 
-     //==========Benchmark output==========:
+    //==========Benchmark output==========:
     Matrix size: 4096x4096
     Tensor batches: 1
     Tensor slices: 15
