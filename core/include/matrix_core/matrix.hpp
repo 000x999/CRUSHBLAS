@@ -48,6 +48,7 @@ public:
     size_t m_cols; 
   };//end map_rows
 public:
+  matrix() = default; 
   matrix(size_t m_row, size_t m_col) : m_row(m_row), m_col(m_col), m_data(m_row * m_col){}
   map_rows operator[](size_t row) {
     /*Could add this back in for more 'correct' manual indexing but it slows down the matmul by 
@@ -72,6 +73,9 @@ private:
 
 public: 
   __attribute__((aligned(32))) mat::matrix mat;
+  //size_t matrix_size; 
+  mat_ops() = default;
+  //mat_ops(size_t matrix_size) : matrix_size(matrix_size){mat = mat::matrix(matrix_size,matrix_size);} 
   mat_ops(mat::matrix &mat): mat(mat){}
   
   void display(){
@@ -294,7 +298,23 @@ public:
     return mat_ops(temp_mat);
   }
 
-  
+  static mat_ops add_matrix(const mat_ops &right_mat, const mat_ops &left_mat){
+   #if DEBUG
+    if(right_mat.mat.m_row != left_mat.mat.m_col){
+      CRUSH_FATAL("MATRIX IS NOT SQUARE : ASSERTION FAILED"); 
+    }
+    assert(right_mat.mat.m_row == left_mat.mat.m_col);
+  #endif
+    mat::matrix new_mat(right_mat.mat.m_row, right_mat.mat.m_col); 
+    mat::mat_ops temp_mat(new_mat); 
+   
+    for(size_t i = 0; i < right_mat.mat.m_row; ++i){
+      for(size_t j = 0; j < right_mat.mat.m_col; ++j){
+        temp_mat.mat[i][j] = right_mat.mat[i][j] + left_mat.mat[i][j]; 
+      } 
+    }
+    return temp_mat;
+  }  
 
 };//end mat_ops 
 
