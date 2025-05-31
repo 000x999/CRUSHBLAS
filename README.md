@@ -1,5 +1,5 @@
 # CRUSHBLAS
-**C++ BLAS-like linear algebra**, **modern encryption** and **lossless compression**
+**C++ BLAS**, **modern encryption** and **lossless compression**
 
 ### CURRENT FEATURES 
 - Generalized matrix and matrix operations containers using a single contiguous array structure. 
@@ -16,6 +16,86 @@
 - Different compression methods and encryption ciphers **==> HIGH PRIORITY**. 
 
 ### BENCHMARKS
+- Contracted TensorMul Benchmark:
+    ```c++
+    void contracted_tensor_mul_benchmark(size_t batches, size_t slices, size_t matrix_size){
+      tens::tensor tensor_a(dims,rank,matrix_size);
+      tens::tensor tensor_b(dims,rank,matrix_size);
+      tens::tensor_ops tensor_op_a(tensor_a);
+      tens::tensor_ops tensor_op_b(tensor_b); 
+      tens::tensor_ops::fill_tensor(tensor_op_a);
+      tens::tensor_ops::fill_tensor(tensor_op_b);
+      std::cout << "Matrix size: " << matrix_size << "x" << matrix_size << std::endl;
+      std::cout << "Tensor batches: " << tensor_a.m_batches << std::endl; 
+      std::cout << "Tensor slices: " << tensor_a.m_slices << std::endl;
+      double totalOps = tensor_a.m_slices * (2 * double(matrix_size) * double(matrix_size) * double(matrix_size));
+      double gflopFactor = 1.0e-9;
+      std::cout<< totalOps * 1e-9 << " GFLOP" << std::endl;
+      auto start = nanos();
+      mat::mat_ops C_mat = tens::tensor_ops::contract_tensor_mul(tensor_op_a, tensor_op_b);
+      auto end = nanos();
+      double optTime = (end - start) * 1e-9;
+      double optGflops = (totalOps * gflopFactor) / optTime;
+      std::cout << "AVX CONTRACTED TENSOR MUL: " << optTime
+                << "s, GFLOP/S = " << optGflops << "\n";
+    }
+
+    int main(){
+        //First argument is the total number of tensor batches
+        //The second argument is the total number of tensor slices
+        //The third argument is the size of the matrices in each tensor slice
+        /*Matrices should be multiples of 8 and MINIMUM 256x256 to make use of AVX256 optimizations
+        Otherwise any NxN or NxM sized matrix will work just fine but won't be accelerated through AVX256*/
+        contracted_tensor_mul_benchmark(1,15,4096)
+    }
+
+     //==========Benchmark output==========:
+    Matrix size: 4096x4096
+    Tensor batches: 1
+    Tensor slices: 15
+    2061.58 GFLOP
+    AVX CONTRACTED TENSOR MUL: 8.1893s, GFLOP/S = 251.741
+
+- Batched TensorMul Benchmark:
+    ```c++
+    void batched_tensor_mul_benchmark(size_t batches, size_t slices, size_t matrix_size){
+      tens::tensor tensor_a(dims,rank,matrix_size);
+      tens::tensor tensor_b(dims,rank,matrix_size);
+      tens::tensor_ops tensor_op_a(tensor_a);
+      tens::tensor_ops tensor_op_b(tensor_b); 
+      tens::tensor_ops::fill_tensor(tensor_op_a);
+      tens::tensor_ops::fill_tensor(tensor_op_b);
+      std::cout << "Matrix size: " << matrix_size << "x" << matrix_size << std::endl;
+      std::cout << "Tensor batches: " << tensor_a.m_batches << std::endl; 
+      std::cout << "Tensor slices: " << tensor_a.m_slices << std::endl;
+      double totalOps = tensor_a.m_slices * (2 * double(matrix_size) * double(matrix_size) * double(matrix_size));
+      double gflopFactor = 1.0e-9;
+      std::cout<< totalOps * 1e-9 << " GFLOP" << std::endl;
+      auto start = nanos();
+      tens::tensor_ops tensor_c = tens::tensor_ops::batch_tensor_mul(tensor_op_a, tensor_op_b);
+      auto end = nanos();
+      double optTime = (end - start) * 1e-9;
+      double optGflops = (totalOps * gflopFactor) / optTime;
+      std::cout << "AVX BATCHED TENSOR MUL: " << optTime
+                << "s, GFLOP/S = " << optGflops << "\n";
+    }
+    
+    int main(){
+        //First argument is the total number of tensor batches
+        //The second argument is the total number of tensor slices
+        //The third argument is the size of the matrices in each tensor slice
+        /*Matrices should be multiples of 8 and MINIMUM 256x256 to make use of AVX256 optimizations
+        Otherwise any NxN or NxM sized matrix will work just fine but won't be accelerated through AVX256*/
+        batched_tensor_mul_benchmark(1,15,4096)
+    }
+
+    //==========Benchmark output==========:
+    Matrix size: 4096x4096
+    Tensor batches: 1
+    Tensor slices: 15
+    2061.58 GFLOP
+    AVX BATCHED TENSOR MUL: 8.66689s, GFLOP/S = 237.869
+    
 - MatMul Benchmark:
     ```c++
    void MatMulBenchmark(float A){
