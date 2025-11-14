@@ -1,6 +1,6 @@
 #include "../../../blas/level3/level3.hpp"
 #if USE_AVX256
-CRUSH_API mat::mat_ops level3::blas::gemm(size_t m, size_t n, size_t p, const mat::mat_ops &left_mat, const mat::mat_ops &right_mat, float alpha, float beta, mat::mat_ops &c_mat) {
+mat::mat_ops level3::blas::gemm(size_t m, size_t n, size_t p, const mat::mat_ops &left_mat, const mat::mat_ops &right_mat, float alpha, float beta, mat::mat_ops &c_mat) {
   constexpr int BLOCK_I = 256;  //1024 bytes at fp32
   constexpr int BLOCK_J = 256;  //1024 bytes at fp32
   constexpr int BLOCK_K = 16;   //64 bytes  at fp32

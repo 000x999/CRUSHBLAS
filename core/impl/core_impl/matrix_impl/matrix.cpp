@@ -152,7 +152,7 @@ size_t mat::mat_ops::return_row_count()const{return this->mat.m_row;}
 size_t mat::mat_ops::return_col_count()const{return this->mat.m_col;}
 
 #if USE_AVX256
-CRUSH_API mat::mat_ops mat::mat_ops::mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
+mat::mat_ops mat::mat_ops::mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
   constexpr int BLOCK_I = 256; //1024 bytes at fp32
   constexpr int BLOCK_J = 256; //1024 bytes at fp32 
   constexpr int BLOCK_K = 16;  //64 bytes at fp32
@@ -246,7 +246,7 @@ CRUSH_API mat::mat_ops mat::mat_ops::mat_mul(const mat_ops &left_mat, const mat_
   return mat_ops(C);
 }
 #else
-CRUSH_API mat::mat_ops mat::mat_ops::mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
+mat::mat_ops mat::mat_ops::mat_mul(const mat_ops &left_mat, const mat_ops &right_mat){
   size_t mat_size_row = left_mat.mat.m_row;
   size_t mat_size_col = left_mat.mat.m_col; 
   size_t mat_col = right_mat.mat.m_col; 
@@ -268,7 +268,7 @@ CRUSH_API mat::mat_ops mat::mat_ops::mat_mul(const mat_ops &left_mat, const mat_
 #endif 
 
 #if USE_AVX256
-CRUSH_API mat::mat_ops mat::mat_ops::transpose_matrix(const mat_ops &mat_in){
+mat::mat_ops mat::mat_ops::transpose_matrix(const mat_ops &mat_in){
   mat::matrix res(mat_in.mat.m_col, mat_in.mat.m_row); 
   float block[8][8] __attribute__((aligned(32))); 
   for(size_t i = 0; i < mat_in.mat.m_row; i += 8){
@@ -289,7 +289,7 @@ CRUSH_API mat::mat_ops mat::mat_ops::transpose_matrix(const mat_ops &mat_in){
   return mat_ops(res); 
 }
 #else
-CRUSH_API mat::mat_ops mat::mat_ops::transpose_matrix(const mat_ops &mat_in){
+mat::mat_ops mat::mat_ops::transpose_matrix(const mat_ops &mat_in){
 #if DEBUG
   if(mat_in.mat.m_row != mat_in.mat.m_col){
     CRUSH_FATAL("MATRIX IS NOT SQUARE : ASSERTION FAILED"); 
@@ -310,7 +310,7 @@ CRUSH_API mat::mat_ops mat::mat_ops::transpose_matrix(const mat_ops &mat_in){
 #endif
 
 #if USE_AVX256
-CRUSH_API mat::mat_ops mat::mat_ops::block_matrix(const mat_ops &mat_in, size_t i, size_t j, size_t p, size_t q){
+mat::mat_ops mat::mat_ops::block_matrix(const mat_ops &mat_in, size_t i, size_t j, size_t p, size_t q){
 #if DEBUG
   if(i + p > mat_in.mat.m_row || j + q > mat_in.mat.m_col){
     CRUSH_FATAL("BLOCK INDICES OUT OF RANGE : ASSERTION FALED"); 
@@ -326,7 +326,7 @@ CRUSH_API mat::mat_ops mat::mat_ops::block_matrix(const mat_ops &mat_in, size_t 
   return mat_ops(temp_mat); 
 }
 #else
-CRUSH_API mat::mat_ops mat::mat_ops::block_matrix(const mat_ops &mat_in, size_t i, size_t j, size_t p, size_t q){
+mat::mat_ops mat::mat_ops::block_matrix(const mat_ops &mat_in, size_t i, size_t j, size_t p, size_t q){
 #if DEBUG
   if(i + p > mat_in.mat.m_row || j + q > mat_in.mat.m_col){
     CRUSH_FATAL("BLOCK INDICES OUT OF RANGE : ASSERTION FALED"); 
@@ -344,7 +344,7 @@ CRUSH_API mat::mat_ops mat::mat_ops::block_matrix(const mat_ops &mat_in, size_t 
 #endif
 
 #if USE_AVX256
-CRUSH_API mat::mat_ops mat::mat_ops::add_matrix(const mat_ops &left_mat, const mat_ops &right_mat){
+mat::mat_ops mat::mat_ops::add_matrix(const mat_ops &left_mat, const mat_ops &right_mat){
 #if DEBUG
   if(right_mat.mat.m_row != left_mat.mat.m_col){
     CRUSH_FATAL("MATRIX IS NOT SQUARE : ASSERTION FAILED"); 
@@ -362,7 +362,7 @@ CRUSH_API mat::mat_ops mat::mat_ops::add_matrix(const mat_ops &left_mat, const m
   return temp_mat; 
 }
 #else
-CRUSH_API mat::mat_ops mat::mat_ops::add_matrix(const mat_ops &left_mat, const mat_ops &right_mat){
+mat::mat_ops mat::mat_ops::add_matrix(const mat_ops &left_mat, const mat_ops &right_mat){
 #if DEBUG
   if(right_mat.mat.m_row != left_mat.mat.m_col){
     CRUSH_FATAL("MATRIX IS NOT SQUARE : ASSERTION FAILED"); 

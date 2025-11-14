@@ -42,10 +42,10 @@ public:
   uint64_t nanos(); 
   size_t return_row_count()const;
   size_t return_col_count()const;
-  static CRUSH_API mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat);
-  static CRUSH_API mat_ops transpose_matrix(const mat_ops &mat_in);
-  static CRUSH_API mat_ops block_matrix(const mat_ops &mat_in, size_t i, size_t j, size_t p, size_t q);
-  static CRUSH_API mat_ops add_matrix(const mat_ops &right_mat, const mat_ops &left_mat); 
+  static mat_ops mat_mul(const mat_ops &left_mat, const mat_ops &right_mat);
+  static mat_ops transpose_matrix(const mat_ops &mat_in);
+  static mat_ops block_matrix(const mat_ops &mat_in, size_t i, size_t j, size_t p, size_t q);
+  static mat_ops add_matrix(const mat_ops &right_mat, const mat_ops &left_mat); 
 };//end mat_ops 
 
 };//End namespace 
