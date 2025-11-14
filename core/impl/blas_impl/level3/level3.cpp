@@ -107,7 +107,7 @@ mat::mat_ops level3::blas::gemm(size_t m, size_t n, size_t p, const mat::mat_ops
   return mat::mat_ops(C);
 }
 #else
-CRUSH_API mat::mat_ops level3::blas::gemm(size_t m, size_t n, size_t p, const mat::mat_ops &A, const mat::mat_ops &B, float alpha, float beta, mat::mat_ops &C){
+mat::mat_ops level3::blas::gemm(size_t m, size_t n, size_t p, const mat::mat_ops &A, const mat::mat_ops &B, float alpha, float beta, mat::mat_ops &C){
   for(size_t i = 0; i < m; ++i){
     for(size_t j = 0; j < n; ++j){
       float result = 0.0f;  
