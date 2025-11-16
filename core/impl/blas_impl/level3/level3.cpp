@@ -129,7 +129,7 @@ void level3::blas::gemm(size_t m, size_t n, size_t p, const level3::mat_ops_view
   mat_ops_view  A = left_view;
   mat_ops_view  B = right_view;
   mat_ops_view  C = c_view;
-//  std::cout << "finished assigning new op views" << '\n'; 
+  std::cout << "finished assigning new op views" << '\n'; 
   omp_set_num_threads(omp_get_max_threads());
   #pragma omp parallel for collapse(2) schedule(dynamic,1)
   for (size_t i_block = 0; i_block < A.row_view; i_block += BLOCK_I) {
@@ -149,13 +149,13 @@ void level3::blas::gemm(size_t m, size_t n, size_t p, const level3::mat_ops_view
           }
         }
       }
-  //    std::cout << "k block loop start" << '\n';      
+      std::cout << "k block loop start" << '\n';      
       for (size_t k_block = 0; k_block < A.row_view; k_block += BLOCK_K) {
         const size_t k_end = std::min(k_block + BLOCK_K, A.row_view);
         
         for (size_t i = i_block; i < i_end; ++i) {
           for (size_t k = k_block; k < k_end; ++k) {  
-    //        std::cout << "a val loading start" << '\n';
+            std::cout << "a val loading start" << '\n';
             float a_val = A[i][k];
             __m256 alpha_vec = _mm256_set1_ps(alpha);  
             __m256 a_vec     = _mm256_broadcast_ss(&a_val);
@@ -167,7 +167,7 @@ void level3::blas::gemm(size_t m, size_t n, size_t p, const level3::mat_ops_view
             //128x128 sized matrices MIN No reason to have it any smaller
             /*If smaller matrices than 128x128 are needed, no reason to use with avx, 
               it's fast enough without for smaller sized ones*/
-   //       std::cout << "unrolled loop start" << '\n'; 
+          std::cout << "unrolled loop start" << '\n'; 
             for (; j + 67 < j_end; j += 64) {
               __m256 b_vec0 = _mm256_load_ps(&B[k][j]);
               __m256 b_vec1 = _mm256_load_ps(&B[k][j +  8]);
@@ -205,7 +205,7 @@ void level3::blas::gemm(size_t m, size_t n, size_t p, const level3::mat_ops_view
               _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 48], c_vec6);
               _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 56], c_vec7);
             }
-           // std::cout << "handling excess from unrolled loop" << '\n'; 
+            std::cout << "handling excess from unrolled loop" << '\n'; 
             for(; j + 7 < j_end; j += 8){
               __m256 b_vec = _mm256_loadu_ps(&B[k][j]); 
               float *c_row = &c_buffer[i - i_block][j - j_block]; 
@@ -220,10 +220,10 @@ void level3::blas::gemm(size_t m, size_t n, size_t p, const level3::mat_ops_view
         }
       }
       //flush buffer C
-      //std::cout << "flushing to c buffer start" << '\n'; 
+      std::cout << "flushing to c buffer start" << '\n'; 
       for (size_t i = i_block; i < i_end; ++i) {
         for (size_t j = j_block; j < j_end; ++j) {
-        //  std::cout << "C[i][j]" << C[i][j] <<  " = " << "c_buffer[i - i_block][j - j_block]" << c_buffer[i - i_block][j - j_block] << '\n'; 
+          std::cout << "C[i][j]" << C[i][j] <<  " = " << "c_buffer[i - i_block][j - j_block]" << c_buffer[i - i_block][j - j_block] << '\n'; 
           C[i][j] = c_buffer[i - i_block][j - j_block];
         }
       }
@@ -232,6 +232,5 @@ void level3::blas::gemm(size_t m, size_t n, size_t p, const level3::mat_ops_view
 #if DEBUG
   DEBUG_THREADS();
 #endif
-  //std::cout << "returning final view" << '\n'; 
 } 
 #endif 
