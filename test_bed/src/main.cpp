@@ -9,7 +9,7 @@ uint64_t nanos() {
   clock_gettime(CLOCK_MONOTONIC, &start);
   return (uint64_t)start.tv_sec * 1000000000ULL + (uint64_t)start.tv_nsec;
 }
-
+  
 void matmul_benchmark(){
   float A = (float)4096; 
   float B = (float)4096;
@@ -66,32 +66,6 @@ void gemm_benchmark(float A){
   op2.fill_mat();
   auto start = nanos(); 
   mat::mat_ops op3 = level3::blas::gemm(0,0,0, op1,op2, 1.0f, 0.0f, op3);
-  auto end = nanos();
-  double optTime = (end - start) * 1e-9;
-  double optGflops = (totalOps * gflopFactor) / optTime;
-  std::cout << "AVX GEMM: " << optTime
-            << "s, GFLOP/S = " << optGflops << "\n";
-}
-
-void gemm_view_benchmark(float A){
-  std::cout<<"Matrix size: " << A << "x"<<A<<std::endl;
-  double totalOps = 2.0 * double(A) * double(A) * double(A);
-  double gflopFactor = 1.0e-9;
-  std::cout<< totalOps * 1e-9 << " GFLOP" << std::endl; 
-  mat::matrix mat1(A, A);
-  mat::matrix mat2(A, A);
-  mat::matrix mat3(A, A); 
-  mat::mat_ops op3(mat3); 
-  mat::mat_ops op1(mat1); 
-  mat::mat_ops op2(mat2);
-  op1.fill_mat();
-  op2.fill_mat();
-  op3.zero_mat(); 
-  level3::mat_ops_view ma{mat1.m_row, mat1.m_col, op1.mat.m_data.data()}; 
-  level3::mat_ops_view mb{mat2.m_row, mat2.m_col, op2.mat.m_data.data()}; 
-  level3::mat_ops_view mc{ma.row_view, mb.col_view, op3.mat.m_data.data()}; 
-  auto start = nanos();
-  level3::blas::gemm(0,0,0, ma,mb, 1.0f, 0.0f, mc);
   auto end = nanos();
   double optTime = (end - start) * 1e-9;
   double optGflops = (totalOps * gflopFactor) / optTime;
@@ -156,6 +130,5 @@ void batched_tensor_mul_benchmark(size_t dims, size_t rank, size_t matrix_size){
 }
 
 int main(){
-  gemm_view_benchmark(10); 
   return 0;
 }
