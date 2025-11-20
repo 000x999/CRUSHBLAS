@@ -332,6 +332,34 @@ void level3::blas::pack_left_block(transpose_gemm transpose_left, const mat_ops_
   }
 }
 
+inline void level3::blas::pack_left_block_fp16(transpose_gemm transpose_left, const mat_ops_view &left_view, size_t index_zero, size_t kindex_zero, size_t m_c, size_t k_c, float *left_pack){
+  const size_t   leading_dimension_left = left_view.leading_dimension; 
+  const uint16_t *left_pack_fp16        = reinterpret_cast<const uint16_t*>(left_view.data_view); 
+  
+  if(transpose_left == transpose_gemm::no_transpose){
+    for(size_t i = 0; i < m_c; ++i){
+      const uint16_t *source_data        = left_pack_fp16 + (index_zero + i) * leading_dimension_left + kindex_zero; 
+      float          *destination_block  = left_pack + i * k_c; 
+    
+      for(size_t k = 0; k < k_c; ++k){
+        destination_block[k] = crush::fp16::half_to_float_scalar(source_data[k]); 
+      }
+    }
+
+  }else{
+    for(size_t i = 0; i < m_c; ++i){
+      float *destination_block = left_pack + i * k_c; 
+      size_t global_index      = index_zero + i;
+      
+      for(size_t k = 0; k < k_c; ++k){
+        size_t global_kindex       = kindex_zero + k;
+        const uint16_t half_scalar = left_pack_fp16[global_kindex * leading_dimension_left + global_index];
+        destination_block[k]       = crush::fp16::half_to_float_scalar(half_scalar); 
+      }
+    }
+  }
+}
+
 void level3::blas::pack_right_block(transpose_gemm transpose_right, const mat_ops_view &right_view, size_t kindex_zero, size_t jindex_zero, size_t k_c, size_t n_c, float *right_pack){
   const size_t leading_dimension_right = right_view.leading_dimension; 
 
@@ -341,15 +369,47 @@ void level3::blas::pack_right_block(transpose_gemm transpose_right, const mat_op
       float       *destination_block = right_pack + k * n_c;
       std::memcpy(destination_block, source_data, n_c * sizeof(float)); 
     }
+
   }else{
     for(size_t k = 0; k < k_c; ++k){
       float *destination_block = right_pack + k * n_c; 
       size_t row_op            = kindex_zero + k; 
+      
       for(size_t j = 0; j < n_c; ++j){
         size_t col_op          = jindex_zero + j; 
         size_t row_right       = col_op;
         size_t col_right       = row_op;
         destination_block[j]   = right_view.data_view[row_right * leading_dimension_right + col_right]; 
+      }
+    }
+  }
+}
+
+void  level3::blas::pack_right_block_fp16(transpose_gemm transpose_right, const mat_ops_view &right_view, size_t kindex_zero, size_t jindex_zero, size_t k_c, size_t n_c, float *right_pack){
+  const size_t leading_dimension_right = right_view.leading_dimension; 
+  const uint16_t *right_pack_fp16      = reinterpret_cast<const uint16_t*>(right_view.data_view); 
+  
+  if(transpose_right == transpose_gemm::no_transpose){
+    for(size_t k = 0; k < k_c; ++k){
+      const uint16_t *source_data          = right_pack_fp16 + (kindex_zero + k) * leading_dimension_right + jindex_zero; 
+      float          *destination_block    = right_pack + k * n_c;
+    
+      for(size_t j = 0; j < n_c; ++j){
+        destination_block[j] = crush::fp16::half_to_float_scalar(source_data[j]); 
+      }
+    }
+
+  }else{
+    for(size_t k = 0; k < k_c; ++k){
+      float *destination_block = right_pack + k * n_c; 
+      size_t row_op            = kindex_zero + k; 
+      
+      for(size_t j = 0; j < n_c; ++j){
+        size_t col_op              = jindex_zero + j; 
+        size_t row_right           = col_op;
+        size_t col_right           = row_op;
+        const uint16_t half_scalar = right_pack_fp16[row_right * leading_dimension_right + col_right]; 
+        destination_block[j]       = crush::fp16::half_to_float_scalar(half_scalar); 
       }
     }
   }
@@ -542,7 +602,7 @@ void level3::blas::gemm_avx256_mt(transpose_gemm transpose_left, transpose_gemm 
   const unsigned hardware_count      = std::thread::hardware_concurrency(); 
   const unsigned max_threads         = (hardware_count == 0 ? 4 : hardware_count);
 
-  const size_t   min_rows_per_thread = 256;
+  const size_t   min_rows_per_thread = 16;
   const unsigned threads_by_rows     = static_cast<unsigned>(std::max<size_t>(1, m / min_rows_per_thread));
 
   const unsigned num_threads         = std::min(max_threads, threads_by_rows);
