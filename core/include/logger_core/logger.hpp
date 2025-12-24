@@ -18,7 +18,7 @@ bool init_logging();
 bool suspend_logging(); 
 
 template <typename... Args>
-inline CRUSH_API void log_output(crush_log_level log_level, Args&&... args){
+inline void log_output(crush_log_level log_level, Args&&... args){
   static constexpr const char *log_level_strings[] = {"\033[31m[FATAL]", "\033[31m[ERROR]", "\033[33m[WARN]","\033[32m[INFO]", "[DEBUG]"};
   bool is_error = log_level < 2; 
   std::ostringstream log_string_stream; 
@@ -28,7 +28,7 @@ inline CRUSH_API void log_output(crush_log_level log_level, Args&&... args){
   FILE *log_message_out = is_error ? stderr : stdout;
   std::fwrite(log_string_buffer.c_str(), 1, log_string_buffer.size(), log_message_out); 
 }
-template CRUSH_API void log_output<>(crush_log_level); 
+template void log_output<>(crush_log_level); 
 #ifndef CRUSH_FATAL
   #define CRUSH_FATAL(...)\
   do{\

@@ -9,7 +9,7 @@ struct matrix{
 public:
   size_t m_row; 
   size_t m_col;
-  __attribute__((aligned(32))) std::vector<float> m_data;
+  std::vector<float> m_data;
   class map_rows{
   public: 
     map_rows(float* m_start_row, size_t m_cols);
@@ -21,6 +21,7 @@ public:
     float *m_start_row; 
     size_t m_cols; 
   };//end map_rows
+ 
 public:
   matrix() = default; 
   matrix(size_t m_row, size_t m_col) : m_row(m_row), m_col(m_col), m_data(m_row * m_col){}
