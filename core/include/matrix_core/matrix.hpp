@@ -1,7 +1,7 @@
 #ifndef MATRIX_H 
 #define MATRIX_H 
-#include "../logger_core/logger.hpp"
-#include "../../defines.h"
+#include "logger_core/logger.hpp"
+#include "crush_defines.h"
 
 #define MATRIX
 namespace mat{

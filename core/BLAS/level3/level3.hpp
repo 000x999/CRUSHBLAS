@@ -21,8 +21,8 @@
 #include <vector>
 #include <memory>
 #include <immintrin.h>
-#include "../../defines.h"
-#include "../../include/utils_core/fp16_utils.hpp"
+#include "crush_defines.h"
+#include "utils_core/fp16_utils.hpp"
 
 namespace level3{
 enum class transpose_gemm{

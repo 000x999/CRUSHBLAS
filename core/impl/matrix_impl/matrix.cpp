@@ -1,4 +1,4 @@
-#include "../../../include/matrix_core/matrix.hpp"
+#include "matrix_core/matrix.hpp"
 
 mat::matrix::map_rows::map_rows(float *m_start_row, size_t m_cols): m_start_row(m_start_row), m_cols(m_cols){}
 mat::matrix::map_rows::map_rows(const float *m_start_row, size_t m_cols): m_start_row(const_cast<float*>(m_start_row)), m_cols(m_cols){}

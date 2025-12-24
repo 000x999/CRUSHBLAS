@@ -1,4 +1,5 @@
-#include "../../../blas/level3/level3.hpp"
+#include "blas/level3/level3.hpp"
+
 namespace{
 constexpr size_t max_block_size = 256; 
 struct alignas(32) local_buffers{

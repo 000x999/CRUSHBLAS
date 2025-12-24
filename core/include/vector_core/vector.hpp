@@ -1,7 +1,7 @@
 #ifndef VECTOR_H  
 #define VECTOR_H
-#include "../../defines.h"
-#include "../logger_core/logger.h"
+#include "crush_defines.h"
+#include "logger_core/logger.h"
 
 #define VECTOR
 namespace vec{
