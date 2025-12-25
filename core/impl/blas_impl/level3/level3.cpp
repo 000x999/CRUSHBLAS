@@ -1,4 +1,4 @@
-#include "blas/level3/level3.hpp"
+#include "level3/level3.hpp"
 
 namespace{
 constexpr size_t max_block_size = 256; 
