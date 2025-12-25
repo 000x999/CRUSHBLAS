@@ -25,6 +25,26 @@
         "CMAKE_BUILD_TYPE": "Release",
         "USE_AVX256": "ON"
       }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "USE_AVX256": "ON"
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "USE_AVX256": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -37,7 +57,16 @@
       "name": "mingw-release-build",
       "displayName": "Build (MinGW Release)",
       "configurePreset": "mingw-release"
+    },
+    {
+      "name": "linux-debug-build",
+      "displayName": "Build (Linux Debug)",
+      "configurePreset": "linux-debug"
+    },
+    {
+      "name": "linux-release-build",
+      "displayName": "Build (Linux Release)",
+      "configurePreset": "linux-release"
     }
   ]
 }
-

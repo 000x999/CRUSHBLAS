@@ -1,92 +1,75 @@
 cmake_minimum_required(VERSION 3.20)
-
-project(CRUSHBLAS
-    LANGUAGES CXX
-)
+project(CRUSHBLAS LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(USE_AVX256 "Enable AVX2/FMA etc."  ON)
-option(DEBUG      "Enable DEBUG prints"   OFF)
-option(USE_VULKAN "Enable Vulkan support" OFF)
-option(USE_OPENGL "Enable OpenGL support" OFF)
-
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-if(MSVC)
-    add_compile_options(/W4)
-else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+option(USE_AVX256   "Enable AVX2/FMA etc." ON)
+option(DEBUG_BLAS   "Enable DEBUG prints" OFF)
+option(USE_VULKAN   "Enable Vulkan support" OFF)
+option(USE_OPENGL   "Enable OpenGL support" OFF)
 
-set(SRC_DIRS
-    test_bed/src
-    core/impl/blas_impl/level3
-    core/impl/core_impl/matrix_impl
-    core/impl/core_impl/tensor_impl
-    
+find_package(OpenMP)
+
+file(GLOB_RECURSE CRUSHBLAS_TEST_SOURCES CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_bed/src/*.cpp
 )
 
-set(SRCS "")
-foreach(dir IN LISTS SRC_DIRS)
-    file(GLOB SRCS_IN_DIR "${dir}/*.cpp")
-    list(APPEND SRCS ${SRCS_IN_DIR})
-endforeach()
+file(GLOB_RECURSE CRUSHBLAS_IMPL_SOURCES CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/impl/blas_impl/level3/*.cpp
+)
 
-add_executable(CRUSHBLAS ${SRCS})
+add_executable(CRUSHBLAS
+  ${CRUSHBLAS_TEST_SOURCES}
+  ${CRUSHBLAS_IMPL_SOURCES}
+)
+
+target_include_directories(CRUSHBLAS PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/core
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/impl
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/impl/blas_impl
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/BLAS
+)
+
+target_compile_definitions(CRUSHBLAS PRIVATE
+  USE_AVX256=$<BOOL:${USE_AVX256}>
+  USE_VULKAN=$<BOOL:${USE_VULKAN}>
+  USE_OPENGL=$<BOOL:${USE_OPENGL}>
+  DEBUG=$<BOOL:${DEBUG_BLAS}>
+)
+
+if(MSVC)
+  target_compile_options(CRUSHBLAS PRIVATE /W4 /O2)
+  if(USE_AVX256)
+    target_compile_options(CRUSHBLAS PRIVATE /arch:AVX2)
+  endif()
+else()
+  target_compile_options(CRUSHBLAS PRIVATE
+    -Wall -Wextra -Wpedantic
+    -O3 -march=native
+  )
+  if(USE_AVX256)
+    target_compile_options(CRUSHBLAS PRIVATE -mavx2 -mfma -mavx)
+  endif()
+endif()
+
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(CRUSHBLAS PRIVATE OpenMP::OpenMP_CXX)
+endif()
 
 if(WIN32)
-    add_custom_target(run
-        COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/run.bat"
-        DEPENDS CRUSHBLAS
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        COMMENT "Building and running CRUSHBLAS via run.bat"
-    )
+  add_custom_target(run
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/run.bat"
+    DEPENDS CRUSHBLAS
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Building and running CRUSHBLAS via run.bat"
+  )
 endif()
-
-if(USE_AVX256)
-    target_compile_definitions(CRUSHBLAS PRIVATE USE_AVX256=1)
-
-    if(MSVC)
-        target_compile_options(CRUSHBLAS PRIVATE /O2 /arch:AVX2)
-    else()
-        target_compile_options(CRUSHBLAS PRIVATE
-            -Ofast
-            -march=native
-            -mavx2
-            -mfma
-            -mavx
-        )
-    endif()
-
-    find_package(OpenMP)
-    if(OpenMP_CXX_FOUND)
-        target_link_libraries(CRUSHBLAS PRIVATE OpenMP::OpenMP_CXX)
-    endif()
-else()
-    target_compile_definitions(CRUSHBLAS PRIVATE USE_AVX256=0)
-endif()
-
-if(DEBUG)
-    target_compile_definitions(CRUSHBLAS PRIVATE DEBUG=1)
-    target_compile_options(CRUSHBLAS PRIVATE
-            -DDEBUG
-    )
-endif()
-
-if(USE_VULKAN)
-    target_compile_definitions(CRUSHBLAS PRIVATE USE_VULKAN=1)
-else()
-    target_compile_definitions(CRUSHBLAS PRIVATE USE_VULKAN=0)
-endif()
-
-if(USE_OPENGL)
-    target_compile_definitions(CRUSHBLAS PRIVATE USE_OPENGL=1)
-else()
-    target_compile_definitions(CRUSHBLAS PRIVATE USE_OPENGL=0)
-endif()
-
