@@ -22,7 +22,6 @@
 #include <memory>
 #include <immintrin.h>
 #include "crush_defines.h"
-#include "utils_core/fp16_utils.hpp"
 
 namespace level3{
 enum class transpose_gemm{
@@ -89,9 +88,7 @@ public:
   //static mat::mat_ops gemm                        (size_t m, size_t n, size_t p, const mat::mat_ops &left_mat, const mat::mat_ops &right_mat, float alpha, float beta, mat::mat_ops &c_mat);
   static void                 gemm                        (size_t m, size_t n, size_t p, const mat_ops_view &left_view, const mat_ops_view &right_view, float alpha, float beta, mat_ops_view &c_view);
   static inline void          pack_left_block             (transpose_gemm transpose_left, const mat_ops_view &left_view, size_t index_zero, size_t kindex_zero, size_t m_c, size_t k_c, float *left_pack); 
-  static inline void          pack_left_block_fp16        (transpose_gemm transpose_left, const mat_ops_view &left_view, size_t index_zero, size_t kindex_zero, size_t m_c, size_t k_c, float *left_pack); 
   static inline void          pack_right_block            (transpose_gemm transpose_right, const mat_ops_view &right_view, size_t kindex_zero, size_t jindex_zero, size_t k_c, size_t n_c, float *right_pack);
-  static inline void          pack_right_block_fp16       (transpose_gemm transpose_right, const mat_ops_view &right_view, size_t kindex_zero, size_t jindex_zero, size_t k_c, size_t n_c, float *right_pack);  
 
   static inline void          microkernel_4x8_avx256      (const float *left_block, size_t leading_dimension_left, const float *right_block, size_t leading_dimension_right, float *c_block, size_t leading_dimension_c, size_t k_c, float alpha, float beta);
   static inline void          microkernel_eno_edge        (size_t m_r, size_t n_r, const float *left_block, size_t leading_dimension_left, const float *right_block, size_t leading_dimension_right, float *c_block, size_t leading_dimension_c, size_t k_c, float alpha, float beta); 
