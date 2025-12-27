@@ -578,7 +578,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
 
   constexpr size_t BLOCK_I = 16;
   constexpr size_t BLOCK_J = 512;
-  constexpr size_t BLOCK_K = 4;
+  constexpr size_t BLOCK_K = 8;
 
   float* A = left_view.data_view;
   float* B = right_view.data_view;
