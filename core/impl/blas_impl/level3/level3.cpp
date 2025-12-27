@@ -611,53 +611,53 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
         for (size_t i = i_block; i < i_end; ++i) {
           for (size_t kk = k_block; kk < k_end; ++kk) {
             float a_val = A[i * lda + kk];
-            __m256 a_vec = _mm256_set1_ps(a_val * alpha);
+            __m512 a_vec = _mm512_set1_ps(a_val * alpha);
 
             size_t j = j_block;
               
             for (; j + 63 < j_end; j += 64) {
-              __m256 b0 = _mm256_loadu_ps(&B[kk * ldb + j]);
-              __m256 b1 = _mm256_loadu_ps(&B[kk * ldb + j + 8]);
-              __m256 b2 = _mm256_loadu_ps(&B[kk * ldb + j + 16]);
-              __m256 b3 = _mm256_loadu_ps(&B[kk * ldb + j + 24]);
-              __m256 b4 = _mm256_loadu_ps(&B[kk * ldb + j + 32]);
-              __m256 b5 = _mm256_loadu_ps(&B[kk * ldb + j + 40]);
-              __m256 b6 = _mm256_loadu_ps(&B[kk * ldb + j + 48]);
-              __m256 b7 = _mm256_loadu_ps(&B[kk * ldb + j + 56]);
+              __m512 b0 = _mm512_loadu_ps(&B[kk * ldb + j]);
+              __m512 b1 = _mm512_loadu_ps(&B[kk * ldb + j + 8]);
+              __m512 b2 = _mm512_loadu_ps(&B[kk * ldb + j + 16]);
+              __m512 b3 = _mm512_loadu_ps(&B[kk * ldb + j + 24]);
+              __m512 b4 = _mm512_loadu_ps(&B[kk * ldb + j + 32]);
+              __m512 b5 = _mm512_loadu_ps(&B[kk * ldb + j + 40]);
+              __m512 b6 = _mm512_loadu_ps(&B[kk * ldb + j + 48]);
+              __m512 b7 = _mm512_loadu_ps(&B[kk * ldb + j + 56]);
 
-              __m256 c0 = _mm256_load_ps(&c_buffer[i - i_block][j - j_block]);
-              __m256 c1 = _mm256_load_ps(&c_buffer[i - i_block][j - j_block + 8]);
-              __m256 c2 = _mm256_load_ps(&c_buffer[i - i_block][j - j_block + 16]);
-              __m256 c3 = _mm256_load_ps(&c_buffer[i - i_block][j - j_block + 24]);
-              __m256 c4 = _mm256_load_ps(&c_buffer[i - i_block][j - j_block + 32]);
-              __m256 c5 = _mm256_load_ps(&c_buffer[i - i_block][j - j_block + 40]);
-              __m256 c6 = _mm256_load_ps(&c_buffer[i - i_block][j - j_block + 48]);
-              __m256 c7 = _mm256_load_ps(&c_buffer[i - i_block][j - j_block + 56]);
+              __m512 c0 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block]);
+              __m512 c1 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 8]);
+              __m512 c2 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 16]);
+              __m512 c3 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 24]);
+              __m512 c4 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 32]);
+              __m512 c5 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 40]);
+              __m512 c6 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 48]);
+              __m512 c7 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 56]);
 
-              c0 = _mm256_fmadd_ps(a_vec, b0, c0);
-              c1 = _mm256_fmadd_ps(a_vec, b1, c1);
-              c2 = _mm256_fmadd_ps(a_vec, b2, c2);
-              c3 = _mm256_fmadd_ps(a_vec, b3, c3);
-              c4 = _mm256_fmadd_ps(a_vec, b4, c4);
-              c5 = _mm256_fmadd_ps(a_vec, b5, c5);
-              c6 = _mm256_fmadd_ps(a_vec, b6, c6);
-              c7 = _mm256_fmadd_ps(a_vec, b7, c7);
+              c0 = _mm512_fmadd_ps(a_vec, b0, c0);
+              c1 = _mm512_fmadd_ps(a_vec, b1, c1);
+              c2 = _mm512_fmadd_ps(a_vec, b2, c2);
+              c3 = _mm512_fmadd_ps(a_vec, b3, c3);
+              c4 = _mm512_fmadd_ps(a_vec, b4, c4);
+              c5 = _mm512_fmadd_ps(a_vec, b5, c5);
+              c6 = _mm512_fmadd_ps(a_vec, b6, c6);
+              c7 = _mm512_fmadd_ps(a_vec, b7, c7);
 
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block], c0);
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 8], c1);
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 16], c2);
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 24], c3);
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 32], c4);
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 40], c5);
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 48], c6);
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block + 56], c7);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block], c0);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 8], c1);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 16], c2);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 24], c3);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 32], c4);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 40], c5);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 48], c6);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 56], c7);
             }
 
-            for (; j + 7 < j_end; j += 8) {
-              __m256 b_vec = _mm256_loadu_ps(&B[kk * ldb + j]);
-              __m256 c_vec = _mm256_load_ps(&c_buffer[i - i_block][j - j_block]);
-              c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);
-              _mm256_store_ps(&c_buffer[i - i_block][j - j_block], c_vec);
+            for (; j + 15 < j_end; j += 16) {
+              __m512 b_vec = _mm512_loadu_ps(&B[kk * ldb + j]);
+              __m512 c_vec = _mm512_load_ps(&c_buffer[i - i_block][j - j_block]);
+              c_vec = _mm512_fmadd_ps(a_vec, b_vec, c_vec);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block], c_vec);
             }
 
             for (; j < j_end; ++j) {
