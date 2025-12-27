@@ -615,7 +615,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
 
             size_t j = j_block;
               
-            for (; j + 255 < j_end; j += 256) {
+            for (; j + 127 < j_end; j += 128) {
               __m512 b0  = _mm512_loadu_ps(&B[kk * ldb + j]);
               __m512 b1  = _mm512_loadu_ps(&B[kk * ldb + j + 16]);
               __m512 b2  = _mm512_loadu_ps(&B[kk * ldb + j + 32]);
@@ -624,6 +624,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               __m512 b5  = _mm512_loadu_ps(&B[kk * ldb + j + 80]);
               __m512 b6  = _mm512_loadu_ps(&B[kk * ldb + j + 96]);
               __m512 b7  = _mm512_loadu_ps(&B[kk * ldb + j + 112]);
+/*
               __m512 b8  = _mm512_loadu_ps(&B[kk * ldb + j + 128]);
               __m512 b9  = _mm512_loadu_ps(&B[kk * ldb + j + 144]);
               __m512 b10 = _mm512_loadu_ps(&B[kk * ldb + j + 160]);
@@ -632,7 +633,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               __m512 b13 = _mm512_loadu_ps(&B[kk * ldb + j + 208]);
               __m512 b14 = _mm512_loadu_ps(&B[kk * ldb + j + 224]);
               __m512 b15 = _mm512_loadu_ps(&B[kk * ldb + j + 240]);
-
+*/
 
               __m512 c0  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block]);
               __m512 c1  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 16]);
@@ -642,6 +643,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               __m512 c5  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 80]);
               __m512 c6  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 96]);
               __m512 c7  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 112]);
+/*
               __m512 c8  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 128]);
               __m512 c9  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 144]);
               __m512 c10 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 160]);
@@ -650,7 +652,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               __m512 c13 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 208]);
               __m512 c14 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 224]);
               __m512 c15 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 240]);
-
+*/
               c0  = _mm512_fmadd_ps(a_vec, b0, c0);
               c1  = _mm512_fmadd_ps(a_vec, b1, c1);
               c2  = _mm512_fmadd_ps(a_vec, b2, c2);
@@ -659,6 +661,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               c5  = _mm512_fmadd_ps(a_vec, b5, c5);
               c6  = _mm512_fmadd_ps(a_vec, b6, c6);
               c7  = _mm512_fmadd_ps(a_vec, b7, c7);
+ /*
               c8  = _mm512_fmadd_ps(a_vec, b8, c8);
               c9  = _mm512_fmadd_ps(a_vec, b9, c9);
               c10 = _mm512_fmadd_ps(a_vec, b10, c10);
@@ -667,7 +670,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               c13 = _mm512_fmadd_ps(a_vec, b13, c13);
               c14 = _mm512_fmadd_ps(a_vec, b14, c14);
               c15 = _mm512_fmadd_ps(a_vec, b15, c15);
-              
+*/              
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block], c0);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 16], c1);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 32], c2);
@@ -676,6 +679,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 80], c5);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 96], c6);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 112], c7);
+/*
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 128], c8);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 144], c9);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 160], c10);
@@ -684,6 +688,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 208], c13);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 224], c14);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 240], c15);
+ */
             }
 
             for (; j + 15 < j_end; j += 16) {
