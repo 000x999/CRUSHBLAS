@@ -615,34 +615,59 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
 
             size_t j = j_block;
               
-            for (; j + 63 < j_end; j += 64) {
-              __m512 b0 = _mm512_loadu_ps(&B[kk * ldb + j]);
-              __m512 b1 = _mm512_loadu_ps(&B[kk * ldb + j + 8]);
-              __m512 b2 = _mm512_loadu_ps(&B[kk * ldb + j + 16]);
-              __m512 b3 = _mm512_loadu_ps(&B[kk * ldb + j + 24]);
-              __m512 b4 = _mm512_loadu_ps(&B[kk * ldb + j + 32]);
-              __m512 b5 = _mm512_loadu_ps(&B[kk * ldb + j + 40]);
-              __m512 b6 = _mm512_loadu_ps(&B[kk * ldb + j + 48]);
-              __m512 b7 = _mm512_loadu_ps(&B[kk * ldb + j + 56]);
+            for (; j + 127 < j_end; j += 128) {
+              __m512 b0  = _mm512_loadu_ps(&B[kk * ldb + j]);
+              __m512 b1  = _mm512_loadu_ps(&B[kk * ldb + j + 8]);
+              __m512 b2  = _mm512_loadu_ps(&B[kk * ldb + j + 16]);
+              __m512 b3  = _mm512_loadu_ps(&B[kk * ldb + j + 24]);
+              __m512 b4  = _mm512_loadu_ps(&B[kk * ldb + j + 32]);
+              __m512 b5  = _mm512_loadu_ps(&B[kk * ldb + j + 40]);
+              __m512 b6  = _mm512_loadu_ps(&B[kk * ldb + j + 48]);
+              __m512 b7  = _mm512_loadu_ps(&B[kk * ldb + j + 56]);
+              __m512 b8  = _mm512_loadu_ps(&B[kk * ldb + j + 64]);
+              __m512 b9  = _mm512_loadu_ps(&B[kk * ldb + j + 72]);
+              __m512 b10 = _mm512_loadu_ps(&B[kk * ldb + j + 80]);
+              __m512 b11 = _mm512_loadu_ps(&B[kk * ldb + j + 88]);
+              __m512 b12 = _mm512_loadu_ps(&B[kk * ldb + j + 96]);
+              __m512 b13 = _mm512_loadu_ps(&B[kk * ldb + j + 104]);
+              __m512 b14 = _mm512_loadu_ps(&B[kk * ldb + j + 112]);
+              __m512 b15 = _mm512_loadu_ps(&B[kk * ldb + j + 120]);
 
-              __m512 c0 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block]);
-              __m512 c1 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 8]);
-              __m512 c2 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 16]);
-              __m512 c3 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 24]);
-              __m512 c4 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 32]);
-              __m512 c5 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 40]);
-              __m512 c6 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 48]);
-              __m512 c7 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 56]);
 
-              c0 = _mm512_fmadd_ps(a_vec, b0, c0);
-              c1 = _mm512_fmadd_ps(a_vec, b1, c1);
-              c2 = _mm512_fmadd_ps(a_vec, b2, c2);
-              c3 = _mm512_fmadd_ps(a_vec, b3, c3);
-              c4 = _mm512_fmadd_ps(a_vec, b4, c4);
-              c5 = _mm512_fmadd_ps(a_vec, b5, c5);
-              c6 = _mm512_fmadd_ps(a_vec, b6, c6);
-              c7 = _mm512_fmadd_ps(a_vec, b7, c7);
+              __m512 c0  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block]);
+              __m512 c1  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 8]);
+              __m512 c2  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 16]);
+              __m512 c3  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 24]);
+              __m512 c4  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 32]);
+              __m512 c5  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 40]);
+              __m512 c6  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 48]);
+              __m512 c7  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 56]);
+              __m512 c8  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 64]);
+              __m512 c9  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 72]);
+              __m512 c10 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 80]);
+              __m512 c11 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 88]);
+              __m512 c12 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 96]);
+              __m512 c13 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 104]);
+              __m512 c14 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 112]);
+              __m512 c15 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 120]);
 
+              c0  = _mm512_fmadd_ps(a_vec, b0, c0);
+              c1  = _mm512_fmadd_ps(a_vec, b1, c1);
+              c2  = _mm512_fmadd_ps(a_vec, b2, c2);
+              c3  = _mm512_fmadd_ps(a_vec, b3, c3);
+              c4  = _mm512_fmadd_ps(a_vec, b4, c4);
+              c5  = _mm512_fmadd_ps(a_vec, b5, c5);
+              c6  = _mm512_fmadd_ps(a_vec, b6, c6);
+              c7  = _mm512_fmadd_ps(a_vec, b7, c7);
+              c8  = _mm512_fmadd_ps(a_vec, b8, c8);
+              c9  = _mm512_fmadd_ps(a_vec, b9, c9);
+              c10 = _mm512_fmadd_ps(a_vec, b10, c10);
+              c11 = _mm512_fmadd_ps(a_vec, b11, c11);
+              c12 = _mm512_fmadd_ps(a_vec, b12, c12);
+              c13 = _mm512_fmadd_ps(a_vec, b13, c13);
+              c14 = _mm512_fmadd_ps(a_vec, b14, c14);
+              c15 = _mm512_fmadd_ps(a_vec, b15, c15);
+              
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block], c0);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 8], c1);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 16], c2);
@@ -651,6 +676,14 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 40], c5);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 48], c6);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 56], c7);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 64], c8);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 72], c9);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 80], c10);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 88], c11);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 96], c12);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 104], c13);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 112], c14);
+              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 120], c15);
             }
 
             for (; j + 15 < j_end; j += 16) {
