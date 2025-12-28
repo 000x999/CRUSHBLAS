@@ -622,11 +622,11 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
             size_t j = j_block;
               
             for (; j + 127 < j_end; j += 128) {
-             // _mm_prefetch(&B[(kk + 1) * ldb + j_block], _MM_HINT_T0); 
-             // _mm_prefetch(&B[(kk + 1) * ldb + j_block + 64], _MM_HINT_T0);
+              _mm_prefetch(&B[(kk + 8) * ldb + j_block], _MM_HINT_T0); 
+              _mm_prefetch(&B[(kk + 8) * ldb + j_block + 64], _MM_HINT_T0);
              
               _mm_prefetch(&B[kk * ldb + j + 256], _MM_HINT_T0);
-              _mm_prefetch(&c_buffer[i + 1 - i_block][j - j_block], _MM_HINT_T0);
+              _mm_prefetch(&c_buffer[i + 8 - i_block][j - j_block], _MM_HINT_T0);
 
               __m512 b0  = _mm512_loadu_ps(&B[kk * ldb + j]);
               __m512 b1  = _mm512_loadu_ps(&B[kk * ldb + j + 16]);
