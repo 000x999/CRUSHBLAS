@@ -609,12 +609,12 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
         size_t k_end = std::min(k_block + BLOCK_K, k);
 
         for (size_t i = i_block; i < i_end; ++i) {
-          _mm_prefetch(&A[(i + 4) * lda + k_block], _MM_HINT_T0);
+          _mm_prefetch(&A[(i + 2) * lda + k_block], _MM_HINT_T0);
 
           for (size_t kk = k_block; kk < k_end; ++kk) {
             if(kk + 1 < k_end){
-              _mm_prefetch(&B[(kk + 4) * ldb + j_block], _MM_HINT_T0); 
-              _mm_prefetch(&B[(kk + 4) * ldb + j_block + 128], _MM_HINT_T0);
+              _mm_prefetch(&B[(kk + 2) * ldb + j_block], _MM_HINT_T0); 
+              _mm_prefetch(&B[(kk + 2) * ldb + j_block + 128], _MM_HINT_T0);
             }
             float a_val = A[i * lda + kk];
             __m512 a_vec = _mm512_set1_ps(a_val * alpha);
