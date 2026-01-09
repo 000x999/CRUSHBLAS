@@ -298,6 +298,7 @@ CRUSHBLAS/
 - [ ] Level-2 BLAS (matrix-vector operations)
 - [ ] Batched GEMM for transformer workloads
 - [ ] ARM NEON backend for mobile/Apple Silicon
+- [ ] JIT/Compiler for automatic CPU/GPU code generation
 - [ ] Auto-tuning for optimal tile sizes per architecture
 
 ## Technical Notes
