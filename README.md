@@ -5,9 +5,9 @@ A high-performance BLAS library written in C++ from scratch with **NO** external
 
 | Benchmark | Configuration | Result |
 |-----------|---------------|--------|
-| GEMM (FP32) | 4096x4096 | **825 GFLOP/s** sustained |
-| GEMM (FP32) | 8192x8192 | **825 GFLOP/s** sustained |
-| GEMM (FP32) | 16384x16384 | **825 GFLOP/s** sustained |
+| GEMM (FP32) | 4096x4096 | **~825 GFLOP/s** sustained |
+| GEMM (FP32) | 8192x8192 | **~825 GFLOP/s** sustained |
+| GEMM (FP32) | 16384x16384 | **~825 GFLOP/s** sustained |
 | Softmax | row-wise | Vectorized AVX implementation |
 
 *Run `gemm_test(4096)` in the test bed to reproduce!*
