@@ -184,9 +184,9 @@ All benchmarks performed on AMD Ryzen 9 9950X3D and an Intel i9-9900K with OpenM
 | Matrix Size | GFLOP | Time | Throughput | % Peak |
 |-------------|-------|------|------------|--------|
 | 1024 x 1024 | 2.1 | 2.6ms | ~820 GFLOP/s | ~23% |
-| 4096 x 4096 | 137.4 | 0.167s | **825 GFLOP/s** | ~23% |
-| 8192 x 8192 | 1099.5 | 1.33s | **825 GFLOP/s** | ~23% |
-| 16384 x 16384 | 8796.1 | 10.66s | **825 GFLOP/s** | ~23% |
+| 4096 x 4096 | 137.4 | 0.167s | **~825 GFLOP/s** | ~23% |
+| 8192 x 8192 | 1099.5 | 1.33s | **~825 GFLOP/s** | ~23% |
+| 16384 x 16384 | 8796.1 | 10.66s | **~825 GFLOP/s** | ~23% |
 
 *% Peak calculated against theoretical max of ~3.5 TFLOP/s (16 cores, AVX-512, FMA)*
 
