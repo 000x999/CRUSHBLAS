@@ -194,7 +194,7 @@ All benchmarks performed on AMD Ryzen 9 9950X3D and an Intel i9-9900K with OpenM
 
 | Library | 4096x4096 GEMM | Notes |
 |---------|-----------------|-------|
-| **CRUSHBLAS** | 825 GFLOP/s | From-scratch, educational |
+| **CRUSHBLAS** | 825 GFLOP/s | From-scratch |
 | OpenBLAS | ~3.5 TFLOP/s | Highly optimized, assembly kernels |
 | Intel MKL | ~3.8 TFLOP/s | Vendor-optimized |
 
