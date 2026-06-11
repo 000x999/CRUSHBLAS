@@ -588,7 +588,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
   size_t ldb = right_view.leading_dimension;
   size_t ldc = c_view.leading_dimension;
 
-  omp_set_num_threads(omp_get_max_threads());
+  omp_set_num_threads(16);
   
   #pragma omp parallel for collapse(2) schedule(dynamic, 1)
   for (size_t i_block = 0; i_block < m; i_block += BLOCK_I) {
