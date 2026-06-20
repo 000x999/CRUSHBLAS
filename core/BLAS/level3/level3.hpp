@@ -39,7 +39,7 @@ struct mat_ops_view{
 
   class map_view{ 
   public:
-    map_view                          (float *m_start_row, size_t m_cols);
+    map_view                          (float       *m_start_row, size_t m_cols);
     map_view                          (const float *m_start_row, size_t m_cols);
 
     float       &operator[]           (size_t col); 
@@ -57,6 +57,31 @@ struct mat_ops_view{
   inline const map_view operator[]    (size_t row)const; 
 }; 
 
+struct mat_ops_view_int8{
+  size_t  row_view; 
+  size_t  col_view; 
+  size_t  leading_dimension;
+  int8_t  *data_view;
+
+  class map_view_int8{ 
+  public:
+    map_view_int8                          (int8_t       *m_start_row, size_t m_cols);
+    map_view_int8                          (const int8_t *m_start_row, size_t m_cols);
+
+    int8_t       &operator[]           (size_t col); 
+    const int8_t &operator[]           (size_t col) const;
+ 
+  private: 
+    int8_t *m_start_row; 
+    size_t m_cols; 
+  };
+  
+  inline       int8_t   &operator()   (size_t i, size_t j);
+  inline const int8_t   &operator()   (size_t i, size_t j) const;
+ 
+  inline       map_view_int8 operator[]    (size_t row);
+  inline const map_view_int8 operator[]    (size_t row)const; 
+}; 
 
 
 class gemm_thread_pool{
@@ -101,8 +126,8 @@ public:
   
   static inline size_t        pad_to_multiple             (size_t value, size_t multiple) { return ((value + multiple - 1) / multiple) * multiple; }
 
-  static void                 crush_gemm                  (transpose_gemm transpose_left, transpose_gemm transpose_right, const mat_ops_view &left_view, const mat_ops_view &right_view, float alpha, float beta, mat_ops_view &c_view);
-
+  static void                 crush_gemm                  (transpose_gemm transpose_left, transpose_gemm transpose_right, const mat_ops_view      &left_view, const mat_ops_view      &right_view, float alpha, float beta, mat_ops_view      &c_view);
+  static void                 crush_gemm_int8             (transpose_gemm transpose_left, transpose_gemm transpose_right, const mat_ops_view_int8 &left_view, const mat_ops_view_int8 &right_view, float alpha, float beta, mat_ops_view_int8 &c_view); 
   static level3::mat_ops_view softmax                     (level3::mat_ops_view &input_view); 
 }; //blas 
 }; //Level3 namespace

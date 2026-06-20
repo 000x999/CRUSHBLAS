@@ -1,7 +1,8 @@
 #include "level3/level3.hpp"
 
 namespace{
-constexpr size_t max_block_size = 256; 
+constexpr size_t max_block_size = 256;
+
 struct alignas(32) local_buffers{
   float left_pack  [ max_block_size * max_block_size ]; 
   float right_pack [ max_block_size * max_block_size ];
@@ -55,6 +56,55 @@ inline const level3::mat_ops_view::map_view level3::mat_ops_view::operator[](siz
   assert(row_view < row); 
 #endif
   return map_view(&data_view[row * col_view], col_view); 
+}
+
+
+
+level3::mat_ops_view_int8::map_view_int8::map_view_int8(int8_t       *m_start_row, size_t m_cols)       : m_start_row(m_start_row)                     , m_cols(m_cols){}  
+level3::mat_ops_view_int8::map_view_int8::map_view_int8(const int8_t *m_start_row, size_t m_cols)       : m_start_row(const_cast<int8_t*>(m_start_row)), m_cols(m_cols){}
+
+int8_t &level3::mat_ops_view_int8::map_view_int8::operator[](size_t col){
+#if DEBUG
+  if(!(col < m_cols)){
+    CRUSH_FATAL("COL INDEX OUT OF BOUNDS :: ASSERTION FAILED"); 
+  }
+  assert(col < m_cols); 
+#endif 
+  return m_start_row[col]; 
+}
+
+const int8_t &level3::mat_ops_view_int8::map_view_int8::operator[](size_t col)const{
+#if DEBUG
+  if(!(col < m_cols)){
+    CRUSH_FATAL("COL INDEX OOB :: ASSERTION FAILED"); 
+  }
+  assert(col < m_cols);
+#endif   
+  return m_start_row[col];     
+}
+
+inline int8_t &level3::mat_ops_view_int8::operator()(size_t i, size_t j)       { return data_view[i * leading_dimension + j]; }
+
+const  int8_t &level3::mat_ops_view_int8::operator()(size_t i, size_t j) const { return data_view[i * leading_dimension + j]; } 
+
+inline level3::mat_ops_view_int8::map_view_int8 level3::mat_ops_view_int8::operator[](size_t row){
+#if DEBUG
+  if(!(row_view, row)){
+    CRUSH_FATAL("ROW INDEX OOB :: ASSERTION FAILED");
+  }
+  assert(row_view < row); 
+#endif 
+  return map_view_int8(&data_view[row * col_view], col_view); 
+}
+
+inline const level3::mat_ops_view_int8::map_view_int8 level3::mat_ops_view_int8::operator[](size_t row)const{
+#if DEBUG
+  if(!(row_view, row)){
+    CRUSH_FATAL("ROW INDEX OOB :: ASSERTION FAILED");
+  }
+  assert(row_view < row); 
+#endif
+  return map_view_int8(&data_view[row * col_view], col_view); 
 }
 
 level3::gemm_thread_pool& level3::gemm_thread_pool::get_instance()                                { static gemm_thread_pool instance; return instance; } 
@@ -583,7 +633,8 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
   float* A = left_view.data_view;
   float* B = right_view.data_view;
   float* C = c_view.data_view;
-  
+  // strides tell us how much we need to jump from one row to the next 
+  //
   size_t lda = left_view.leading_dimension;
   size_t ldb = right_view.leading_dimension;
   size_t ldc = c_view.leading_dimension;
@@ -602,20 +653,24 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
         for (size_t ii = i_block; ii < i_end; ++ii) {
           for (size_t jj = j_block; jj < j_end; ++jj) {
             c_buffer[ii - i_block][jj - j_block] = beta * C[ii * ldc + jj];
-            }
           }
+        }
       }
+
       for (size_t k_block = 0; k_block < k; k_block += BLOCK_K) {
         size_t k_end = std::min(k_block + BLOCK_K, k);
 
         for (size_t i = i_block; i < i_end; ++i) {
+          //tells the cpu to start pre-fetching data from this index 
+          //+2 is the pre-fetch distance, can be tuned
           _mm_prefetch( &A[(i + 2) * lda + k_block], _MM_HINT_T0 );
 
           for (size_t kk = k_block; kk < k_end; ++kk) {
             if(kk + 1 < k_end){
-              _mm_prefetch( &B[(kk + 2) * ldb + j_block], _MM_HINT_T0       ); 
+              _mm_prefetch( &B[(kk + 2) * ldb + j_block]      , _MM_HINT_T0 ); 
               _mm_prefetch( &B[(kk + 2) * ldb + j_block + 128], _MM_HINT_T0 );
             }
+
             float a_val = A[i * lda + kk];
             __m512 a_vec = _mm512_set1_ps(a_val * alpha);
 
@@ -630,16 +685,6 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               __m512 b5  = _mm512_loadu_ps(&B[kk * ldb + j + 80]);
               __m512 b6  = _mm512_loadu_ps(&B[kk * ldb + j + 96]);
               __m512 b7  = _mm512_loadu_ps(&B[kk * ldb + j + 112]);
-/*
-              __m512 b8  = _mm512_loadu_ps(&B[kk * ldb + j + 128]);
-              __m512 b9  = _mm512_loadu_ps(&B[kk * ldb + j + 144]);
-              __m512 b10 = _mm512_loadu_ps(&B[kk * ldb + j + 160]);
-              __m512 b11 = _mm512_loadu_ps(&B[kk * ldb + j + 176]);
-              __m512 b12 = _mm512_loadu_ps(&B[kk * ldb + j + 192]);
-              __m512 b13 = _mm512_loadu_ps(&B[kk * ldb + j + 208]);
-              __m512 b14 = _mm512_loadu_ps(&B[kk * ldb + j + 224]);
-              __m512 b15 = _mm512_loadu_ps(&B[kk * ldb + j + 240]);
-*/
 
               __m512 c0  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block]);
               __m512 c1  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 16]);
@@ -649,16 +694,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               __m512 c5  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 80]);
               __m512 c6  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 96]);
               __m512 c7  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 112]);
-/*
-              __m512 c8  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 128]);
-              __m512 c9  = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 144]);
-              __m512 c10 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 160]);
-              __m512 c11 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 176]);
-              __m512 c12 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 192]);
-              __m512 c13 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 208]);
-              __m512 c14 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 224]);
-              __m512 c15 = _mm512_load_ps(&c_buffer[i - i_block][j - j_block + 240]);
-*/
+
               c0  = _mm512_fmadd_ps(a_vec, b0, c0);
               c1  = _mm512_fmadd_ps(a_vec, b1, c1);
               c2  = _mm512_fmadd_ps(a_vec, b2, c2);
@@ -667,16 +703,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               c5  = _mm512_fmadd_ps(a_vec, b5, c5);
               c6  = _mm512_fmadd_ps(a_vec, b6, c6);
               c7  = _mm512_fmadd_ps(a_vec, b7, c7);
- /*
-              c8  = _mm512_fmadd_ps(a_vec, b8, c8);
-              c9  = _mm512_fmadd_ps(a_vec, b9, c9);
-              c10 = _mm512_fmadd_ps(a_vec, b10, c10);
-              c11 = _mm512_fmadd_ps(a_vec, b11, c11);
-              c12 = _mm512_fmadd_ps(a_vec, b12, c12);
-              c13 = _mm512_fmadd_ps(a_vec, b13, c13);
-              c14 = _mm512_fmadd_ps(a_vec, b14, c14);
-              c15 = _mm512_fmadd_ps(a_vec, b15, c15);
-*/              
+              
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block], c0);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 16], c1);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 32], c2);
@@ -685,16 +712,6 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 80], c5);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 96], c6);
               _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 112], c7);
-/*
-              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 128], c8);
-              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 144], c9);
-              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 160], c10);
-              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 176], c11);
-              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 192], c12);
-              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 208], c13);
-              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 224], c14);
-              _mm512_store_ps(&c_buffer[i - i_block][j - j_block + 240], c15);
- */
             }
 
             for (; j + 15 < j_end; j += 16) {
@@ -710,6 +727,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
           }
         }
       }
+
       for (size_t i = i_block; i < i_end; ++i) {
         for (size_t j = j_block; j < j_end; ++j) {
           C[i * ldc + j] = c_buffer[i - i_block][j - j_block];
@@ -718,6 +736,91 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
     }
   }
 }
+#endif 
+
+#if USE_AVX256
+void crush_gemm_int8(level3::transpose_gemm transpose_left, level3::transpose_gemm transpose_right, const level3::mat_ops_view_int8 &left_view, const level3::mat_ops_view_int8 &right_view, float alpha, float beta, level3::mat_ops_view_int8 &c_view){
+  size_t m = (transpose_left == level3::transpose_gemm::no_transpose) ? left_view.row_view  : left_view.col_view; 
+  size_t n = (transpose_left == level3::transpose_gemm::no_transpose) ? left_view.col_view  : left_view.row_view;  
+  size_t k = (transpose_left == level3::transpose_gemm::no_transpose) ? right_view.col_view : right_view.row_view; 
+  
+  constexpr size_t BLOCK_I = 16; 
+  constexpr size_t BLOCK_J = 128; 
+  constexpr size_t BLOCK_K = 4;
+
+  int8_t *A = left_view.data_view; 
+  int8_t *B = right_view.data_view; 
+  int8_t *C = c_view.data_view;
+
+  size_t lda = left_view.leading_dimension; 
+  size_t ldb = right_view.leading_dimension; 
+  size_t ldc  = c_view.leading_dimension; 
+  
+  omp_set_num_threads(16); 
+  
+  #pragma omp parallel for collapse(2) schedule(dynamic, 1)
+  for(size_t i_block = 0; i_block < m; i_block += BLOCK_I){
+    for(size_t j_block = 0; j_block < n; j_block += BLOCK_J){
+      alignas(64) int8_t c_buff[BLOCK_I][BLOCK_J] = {{0}};
+
+      size_t i_end = std::min(i_block + BLOCK_I, m); 
+      size_t j_end = std::min(j_block + BLOCK_J, n);
+
+      if(beta != 0.0f){
+        for(size_t ii = i_block; ii < i_end; ++ii){
+          for(size_t jj = j_block; jj < j_end; ++jj){
+            c_buff[ii - i_block][jj - j_block] = beta * C[ii * ldc + jj]; 
+          }
+        }
+      }
+      
+      for(size_t k_block = 0; k_block < k; k_block += BLOCK_K){
+        size_t k_end = std::min(k_block + BLOCK_K, k);
+        for(size_t i = i_block; i_block < i_end; ++i_block){
+          _mm_prefetch(&A[(i + 2) * lda + k_block], _MM_HINT_T0);
+          for(size_t kk = k_block; kk < k_end; ++kk){
+            if((kk + 1) < k_end){
+              _mm_prefetch(&B[(kk + 2) * ldb + j_block]      , _MM_HINT_T0); 
+              _mm_prefetch(&B[(kk + 2) * ldb + j_block + 128], _MM_HINT_T0);
+            }
+            int8_t a_val      = A[i * lda + kk];
+            int8_t alpha_cast = static_cast<int8_t>(alpha); 
+            __m512 a_vec      = _mm512_set1_epi8(a_val * alpha_cast);
+
+            size_t j          = j_block;
+            for(; j + 127 < j_end; j += 128){
+              __m512 b0 = _mm512_loadu_epi8(&B[kk * ldb + j     ]);
+              __m512 b1 = _mm512_loadu_epi8(&B[kk * ldb + j + 64]);
+
+              __m512 c0 = _mm512_loadu_epi8 (&c_buff[i - i_block][j - j_block     ]); 
+              __m512 c1 = _mm512_loadu_epi8 (&c_buff[i - i_block][j - j_block + 64]);
+
+              c0 = _mm512_dpbusd_epi32(a_vec, b0, c0); 
+              c1 = _mm512_dpbusd_epi32(a_vec, b1, c1);
+
+              _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block]     , c0);
+              _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block + 64], c1);
+            }
+            for(;j + 15 < j_end; j += 16){
+              __m512 b_vec = _mm512_loadu_epi8(&B[kk * ldb + j]);
+              __m512 c_vec = _mm512_loadu_epi8(&c_buff[i - i_block][j - j_block]);
+              c_vec        = _mm512_dpbusd_epi32(a_vec, b_vec, c_vec);
+              _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block], c_vec); 
+            }
+            for(;j < j_end; ++j){
+              c_buff[i - i_block][j - j_block] += a_val * alpha_cast * B[kk * ldb + j]; 
+            }
+          }
+        }
+      }
+      for(size_t i = i_block; i < i_end; ++i){
+        for(size_t j = j_block; j < j_end; ++j){
+          C[i * ldc + j] = c_buff[i - i_block][j - j_block];
+        }
+      }
+    }
+  }  
+} 
 #endif 
 
 level3::mat_ops_view level3::blas::softmax(level3::mat_ops_view &input_view){
