@@ -783,17 +783,17 @@ void crush_gemm_int8(level3::transpose_gemm transpose_left, level3::transpose_ge
               _mm_prefetch(&B[(kk + 2) * ldb + j_block]      , _MM_HINT_T0); 
               _mm_prefetch(&B[(kk + 2) * ldb + j_block + 128], _MM_HINT_T0);
             }
-            int8_t a_val      = A[i * lda + kk];
-            int8_t alpha_cast = static_cast<int8_t>(alpha); 
-            __m512 a_vec      = _mm512_set1_epi8(a_val * alpha_cast);
+            int8_t a_val       = A[i * lda + kk];
+            int8_t alpha_cast  = static_cast<int8_t>(alpha); 
+            __m512i a_vec      = _mm512_set1_epi8(a_val * alpha_cast);
 
             size_t j          = j_block;
             for(; j + 127 < j_end; j += 128){
-              __m512 b0 = _mm512_loadu_epi8(&B[kk * ldb + j     ]);
-              __m512 b1 = _mm512_loadu_epi8(&B[kk * ldb + j + 64]);
+              __m512i b0 = _mm512_loadu_epi8(&B[kk * ldb + j     ]);
+              __m512i b1 = _mm512_loadu_epi8(&B[kk * ldb + j + 64]);
 
-              __m512 c0 = _mm512_loadu_epi8 (&c_buff[i - i_block][j - j_block     ]); 
-              __m512 c1 = _mm512_loadu_epi8 (&c_buff[i - i_block][j - j_block + 64]);
+              __m512i c0 = _mm512_loadu_epi8 (&c_buff[i - i_block][j - j_block     ]); 
+              __m512i c1 = _mm512_loadu_epi8 (&c_buff[i - i_block][j - j_block + 64]);
 
               c0 = _mm512_dpbusd_epi32(a_vec, b0, c0); 
               c1 = _mm512_dpbusd_epi32(a_vec, b1, c1);
@@ -802,8 +802,8 @@ void crush_gemm_int8(level3::transpose_gemm transpose_left, level3::transpose_ge
               _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block + 64], c1);
             }
             for(;j + 15 < j_end; j += 16){
-              __m512 b_vec = _mm512_loadu_epi8(&B[kk * ldb + j]);
-              __m512 c_vec = _mm512_loadu_epi8(&c_buff[i - i_block][j - j_block]);
+              __m512i b_vec = _mm512_loadu_epi8(&B[kk * ldb + j]);
+              __m512i c_vec = _mm512_loadu_epi8(&c_buff[i - i_block][j - j_block]);
               c_vec        = _mm512_dpbusd_epi32(a_vec, b_vec, c_vec);
               _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block], c_vec); 
             }
