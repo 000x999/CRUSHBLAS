@@ -756,9 +756,10 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
   size_t ldb = right_view.leading_dimension; 
   size_t ldc  = c_view.leading_dimension; 
   
-  omp_set_num_threads(16); 
+  omp_set_num_threads(1); 
   
   #pragma omp parallel for collapse(2) schedule(dynamic, 1)
+  std::cout << "reaches after omp collapse\n";
   for(size_t i_block = 0; i_block < m; i_block += BLOCK_I){
     for(size_t j_block = 0; j_block < n; j_block += BLOCK_J){
       alignas(64) int8_t c_buff[BLOCK_I][BLOCK_J] = {{0}};
@@ -773,7 +774,8 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
           }
         }
       }
-      
+      std::cout << "reaches after beta check\n";
+
       for(size_t k_block = 0; k_block < k; k_block += BLOCK_K){
         size_t k_end = std::min(k_block + BLOCK_K, k);
         for(size_t i = i_block; i_block < i_end; ++i_block){
@@ -789,6 +791,7 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
 
             size_t j          = j_block;
             for(; j + 127 < j_end; j += 128){
+              std::cout << "reaches inside vectorized loop\n";
               __m512i b0 = _mm512_loadu_epi8(&B[kk * ldb + j     ]);
               __m512i b1 = _mm512_loadu_epi8(&B[kk * ldb + j + 64]);
 
@@ -800,6 +803,7 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
 
               _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block]     , c0);
               _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block + 64], c1);
+              std::cout << "vector loop end\n"; 
             }
             for(;j + 15 < j_end; j += 16){
               __m512i b_vec = _mm512_loadu_epi8(&B[kk * ldb + j]);
