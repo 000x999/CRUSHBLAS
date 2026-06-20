@@ -759,7 +759,6 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
   omp_set_num_threads(1); 
   
   #pragma omp parallel for collapse(2) schedule(dynamic, 1)
-  std::cout << "reaches after omp collapse\n";
   for(size_t i_block = 0; i_block < m; i_block += BLOCK_I){
     for(size_t j_block = 0; j_block < n; j_block += BLOCK_J){
       alignas(64) int8_t c_buff[BLOCK_I][BLOCK_J] = {{0}};
