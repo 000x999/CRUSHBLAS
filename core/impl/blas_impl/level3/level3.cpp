@@ -773,7 +773,6 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
           }
         }
       }
-      std::cout << "reaches after beta check\n";
 
       for(size_t k_block = 0; k_block < k; k_block += BLOCK_K){
         size_t k_end = std::min(k_block + BLOCK_K, k);
@@ -790,8 +789,6 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
 
             size_t j          = j_block;
             for(; j + 127 < j_end; j += 128){
-
-              std::cout << "reaches inside vectorized loop\n";
               __m512i b0 = _mm512_loadu_epi8(&B[kk * ldb + j     ]);
               __m512i b1 = _mm512_loadu_epi8(&B[kk * ldb + j + 64]);
 
@@ -803,17 +800,14 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
 
               _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block]     , c0);
               _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block + 64], c1);
-              std::cout << "vector loop end\n"; 
             }
             for(;j + 15 < j_end; j += 16){
-              std::cout << "reaches tail acc#1\n"; 
               __m512i b_vec = _mm512_loadu_epi8(&B[kk * ldb + j]);
               __m512i c_vec = _mm512_loadu_epi8(&c_buff[i - i_block][j - j_block]);
               c_vec        = _mm512_dpbusd_epi32(a_vec, b_vec, c_vec);
               _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block], c_vec); 
             }
             for(;j < j_end; ++j){
-              std::cout << "reaches tail acc#2\n"; 
               c_buff[i - i_block][j - j_block] += a_val * alpha_cast * B[kk * ldb + j]; 
             }
           }
