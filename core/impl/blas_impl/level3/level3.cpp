@@ -739,7 +739,7 @@ void level3::blas::crush_gemm(transpose_gemm transpose_left, transpose_gemm tran
 #endif 
 
 #if USE_AVX256
-void crush_gemm_int8(level3::transpose_gemm transpose_left, level3::transpose_gemm transpose_right, const level3::mat_ops_view_int8 &left_view, const level3::mat_ops_view_int8 &right_view, float alpha, float beta, level3::mat_ops_view_int8 &c_view){
+void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3::transpose_gemm transpose_right, const level3::mat_ops_view_int8 &left_view, const level3::mat_ops_view_int8 &right_view, float alpha, float beta, level3::mat_ops_view_int8 &c_view){
   size_t m = (transpose_left == level3::transpose_gemm::no_transpose) ? left_view.row_view  : left_view.col_view; 
   size_t n = (transpose_left == level3::transpose_gemm::no_transpose) ? left_view.col_view  : left_view.row_view;  
   size_t k = (transpose_left == level3::transpose_gemm::no_transpose) ? right_view.col_view : right_view.row_view; 
