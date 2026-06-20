@@ -806,12 +806,14 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
               std::cout << "vector loop end\n"; 
             }
             for(;j + 15 < j_end; j += 16){
+              std::cout << "reaches tail acc#1\n"; 
               __m512i b_vec = _mm512_loadu_epi8(&B[kk * ldb + j]);
               __m512i c_vec = _mm512_loadu_epi8(&c_buff[i - i_block][j - j_block]);
               c_vec        = _mm512_dpbusd_epi32(a_vec, b_vec, c_vec);
               _mm512_storeu_epi8(&c_buff[i - i_block][j - j_block], c_vec); 
             }
             for(;j < j_end; ++j){
+              std::cout << "reaches tail acc#2\n"; 
               c_buff[i - i_block][j - j_block] += a_val * alpha_cast * B[kk * ldb + j]; 
             }
           }
