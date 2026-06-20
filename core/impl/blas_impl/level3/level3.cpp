@@ -1,5 +1,5 @@
 #include "level3/level3.hpp"
-
+#include <iostream> 
 namespace{
 constexpr size_t max_block_size = 256;
 
@@ -791,6 +791,7 @@ void level3::blas::crush_gemm_int8(level3::transpose_gemm transpose_left, level3
 
             size_t j          = j_block;
             for(; j + 127 < j_end; j += 128){
+
               std::cout << "reaches inside vectorized loop\n";
               __m512i b0 = _mm512_loadu_epi8(&B[kk * ldb + j     ]);
               __m512i b1 = _mm512_loadu_epi8(&B[kk * ldb + j + 64]);
